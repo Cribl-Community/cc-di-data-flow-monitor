@@ -1,0 +1,237 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Capra's own Tooltip bubble has no `max-width` at all (confirmed by reading
+   `@capra/core`'s own compiled CSS directly) — its `inline-flex` layout sizes to its content's
+   full intrinsic width, so any tooltip whose `title` runs longer than a few words renders as one
+   very wide single line instead of wrapping, up to and including spanning the entire browser
+   window for this app's longer explanatory tooltips (Commit & Deploy's own info icon, the Signal
+   Path quota chip). A real, app-wide gap, not one specific tooltip's own bug — fixed once, here,
+   for every Tooltip in the app, rather than patched per call site. Targets Capra's own literal
+   hashed class name (the same narrow, deliberately-scoped Capra-internal-class override pattern
+   already established elsewhere in this file, e.g. the Drawer sheet/overlay rules below) — if a
+   future `@capra/core` upgrade changes that hash, this rule just stops matching rather than
+   breaking anything. `white-space` needs no explicit reset — nothing in Capra's own CSS forces
+   `nowrap` here, so imposing a real `max-width` is enough on its own to make the browser wrap. */
+.capra-Tooltip-module-IEiZ6a-base {
+  max-width: 280px;
+}
+
+/* Every scrollable panel across the app (Overview's own panels, Signal Path's lanes/drawer tables,
+   Flow Explorer's table, the Settings/Help drawers, License's tables, etc.) previously fell back to
+   the browser/OS's own native scrollbar — which does not track this app's own light/dark theme at
+   all, so a light-grey scrollbar stayed light-grey in dark mode and read as a jarring, unstyled
+   mismatch. Styled once, globally, rather than per scrollable class (there are dozens across this
+   app and a hand-enumerated list would inevitably miss one) via the two standard cross-browser
+   scrollbar mechanisms: `scrollbar-color`/`scrollbar-width` (Firefox — both inherited properties,
+   so setting them once on the root cascades to every scrollable descendant) and
+   `::-webkit-scrollbar*` (Chromium/WebKit, including Cribl.Cloud's own embedding browser — these
+   pseudo-elements aren't inheritance-based, so they need the `*` universal selector to reach every
+   element rather than just the root). Both use `color.background.neutral.solid.default`/`.hover` —
+   the same neutral-ramp tokens already proven to resolve differently, correctly, under this app's
+   `.dark` class everywhere else they're used — so the thumb color flips with the theme
+   automatically, with no separate `.dark` override needed here. */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: token('color.background.neutral.solid.default') transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: token('color.background.neutral.solid.default');
+  border-radius: token('radius.full');
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: token('color.background.neutral.solid.hover');
+}
+
+/* No `gap` — the sidebar and main content sit flush against each other (see `.app-sidebar` and
+   `.app-content` below), so the two read as one merged panel with a single border at the seam
+   instead of two separate floating cards. The outer padding here is what keeps the *whole*
+   merged panel's rounded corners visible against the page background. */
+.app-shell {
+  display: flex;
+  align-items: stretch;
+  height: 100vh;
+  overflow: hidden;
+  padding: token('spacing.md');
+  background: token('color.background.neutral.subtle');
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 token('radius.xl') token('radius.xl') 0;
+  background: token('color.background.application');
+  border: token('border.default');
+}
+
+.view-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.view-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: token('spacing.2xl');
+}
+
+/* Shown only for the brief window before `state.preferencesLoaded` — see `App.tsx`'s own
+   `DefaultViewRedirect` doc comment. Same centered-placeholder shape as `.view-body`, but this
+   renders directly inside `.app-content` (no `<Route>` element has matched yet, so no `.view-page`/
+   `.view-body` wrapper exists to reuse) rather than inside a real page. */
+.app-initial-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The empty portal target the Settings/Help `Drawer` mounts into (`App.tsx`'s `getContainer`) —
+   never sized or visible itself; it exists only so the rule below can scope to it. */
+.side-panel-portal {
+  display: contents;
+}
+
+/* Settings/Help opens from the sidebar's own right edge, not the true viewport edge, so the rail
+   and its icons stay visible (not covered by the sheet) while the panel is open — per explicit
+   direction. Capra's `Drawer` has no built-in "anchor past this element" option, so this overrides
+   its own rendered `left` directly; scoped to `.side-panel-portal` (this Drawer's own dedicated
+   `getContainer` target — see `App.tsx`) rather than the bare `.capra-Drawer-module-*` classes,
+   which are shared by every Drawer in the app (including Signal Path's own node-detail drawer,
+   portaled to `document.body` as usual and completely unaffected by this rule). `--app-sidebar-
+   width` is kept live by a `ResizeObserver` in `App.tsx`, not a fixed guess — the sidebar's own
+   width genuinely varies (collapsed vs. expanded, and the transient hover-expand state). Matching
+   specificity + later source order (this file's own established "wins last" spot) is enough to
+   win over Capra's rule without `!important`. */
+.side-panel-portal .capra-Drawer-module-H0eofa-sheet,
+.side-panel-portal .capra-Drawer-module-H0eofa-overlay {
+  left: var(--app-sidebar-width, 73px);
+}
+
+/* Capra's own slide animation moves the sheet by `translateX(-100%)` — a distance equal to the
+   sheet's *own width*, not to its `left` offset. Combined with `left: var(--app-sidebar-width)`
+   above, the sheet's closed-state box still spans back across the sidebar's own footprint (its
+   right edge sits exactly at the sidebar edge, its left edge goes negative) — so the very first
+   animation frame already shows a full sidebar-width sliver of the drawer sitting on top of the
+   rail, reading as "sliding in from the true screen edge" rather than growing out of the rail's
+   own edge. Redefining just the keyframes (below) to travel the extra `--app-sidebar-width` keeps
+   the sheet's whole box clear of the rail's footprint until it actually arrives, and adding an
+   opacity fade to the same keyframes (Capra's own originals are transform-only) softens the
+   motion further. Only `animation-name` is overridden here — duration, easing, and (for the
+   "out" direction) the `forwards` fill-mode all still come from Capra's own rule underneath,
+   since those longhands are never touched by this one. */
+.side-panel-portal .capra-Drawer-module-H0eofa-root[data-open='true'] .capra-Drawer-module-H0eofa-sheet[data-placement='left'] {
+  animation-name: side-panel-drawer-in;
+}
+.side-panel-portal .capra-Drawer-module-H0eofa-root[data-open='false'] .capra-Drawer-module-H0eofa-sheet[data-placement='left'] {
+  animation-name: side-panel-drawer-out;
+}
+@keyframes side-panel-drawer-in {
+  from {
+    transform: translateX(calc(-100% - var(--app-sidebar-width, 73px)));
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes side-panel-drawer-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(calc(-100% - var(--app-sidebar-width, 73px)));
+    opacity: 0;
+  }
+}
+
+/* The scrim itself never animated at all in Capra's own CSS (it just appears/disappears with the
+   rest of the drawer's mount state) — a plain fade makes the open/close feel like one continuous
+   motion with the sheet above instead of two out-of-sync effects. */
+.side-panel-portal .capra-Drawer-module-H0eofa-root[data-open='true'] .capra-Drawer-module-H0eofa-overlay {
+  animation: side-panel-overlay-in var(--cds2-motion-duration-medium-2) var(--cds2-motion-easing-standard);
+}
+.side-panel-portal .capra-Drawer-module-H0eofa-root[data-open='false'] .capra-Drawer-module-H0eofa-overlay {
+  animation: side-panel-overlay-out var(--cds2-motion-duration-medium-2) var(--cds2-motion-easing-standard) forwards;
+}
+@keyframes side-panel-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes side-panel-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* The Settings/Help drawer's custom header (`App.tsx`'s own `title` node, replacing Capra's
+   built-in title+close layout so a pin toggle can sit next to the close button — see that
+   component's own doc comment). Spans the header's full width itself since Capra's own trailing
+   slot is now empty (`closable={false}`).
+
+   Three children now, not two: title, a flexible middle slot, and the pin/close icons.
+   `justify-content: space-between` still does the right thing with a flex-growing middle child
+   present — that child absorbs all the free space itself, leaving nothing left for `space-between`
+   to distribute, which is exactly "title flush left, icons flush right" either way. On Settings
+   (no search box of its own) `.side-panel-header-spacer` stands in for that middle slot so both
+   panels share one header layout instead of two slightly different ones. */
+.side-panel-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.md');
+  width: 100%;
+}
+
+.side-panel-header-spacer {
+  flex: 1;
+}
+
+.side-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  flex-shrink: 0;
+}
+
+/* Pinned = actively suspending the drawer's own click-outside-to-close — the same accent-tinted
+   "on" treatment already used for other toggled/selected controls in this app (see e.g. the
+   segmented status-filter's own active button). */
+.side-panel-pin-btn--active {
+  color: token('color.foreground.accent.default');
+  background: token('color.background.accent.subtle');
+  border-radius: token('radius.md');
+}

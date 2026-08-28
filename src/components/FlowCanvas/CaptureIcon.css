@@ -1,0 +1,18 @@
+.capture-icon {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  z-index: 3;
+}
+
+/* A bit more visual weight than a default secondary IconButton — this sits directly on top of
+   colored edge lines and needs to read clearly regardless of what's under it. */
+.capture-icon-button {
+  background: token('color.background.panel.solid');
+  border-color: token('color.border.accent.strong');
+  box-shadow: token('shadow.low.down');
+}
+
+.capture-icon-button:hover {
+  background: token('color.background.accent.subtle');
+}

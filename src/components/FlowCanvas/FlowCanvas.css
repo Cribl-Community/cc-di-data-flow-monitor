@@ -1,0 +1,416 @@
+.flow-canvas {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  padding: token('spacing.xl') token('spacing.2xl');
+}
+
+.flow-canvas-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.flow-canvas-lanes {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 72px;
+  width: 100%;
+  /* Reserves clear space above every node for lane-skipping edge detours (see geometry.ts) — just
+     enough for that (the detour math itself, `topClearY` in FlowCanvas.tsx, clears a dynamic 30px
+     above whatever the lane headers' own measured top turns out to be, so it adapts to this value
+     rather than assuming it). Previously 56px, which read as a large, visibly unused gap between
+     the top bar and the lane headings below it on the common case of a canvas with no detours
+     actually using that space. */
+  padding-top: 28px;
+  z-index: 1;
+}
+
+.flow-lane {
+  display: flex;
+  flex-direction: column;
+  /* A generous flex-grow with a fairly high cap — lanes fill the full canvas width on wide
+     browsers instead of clumping to the left with the remainder left blank, while the cap keeps
+     individual cards from stretching absurdly wide on ultra-wide monitors. The wider gap above
+     gives detoured edges (see geometry.ts) more clear space to route through between lanes.
+     Narrower than Routes (below) — Sources/Destinations/every Pipeline role only ever show a
+     single id/value pair, not a full filter expression, so they don't need the extra room. */
+  /* min-width lowered from an original 150px — real, confirmed live: with 6 fixed-min-width lanes
+     plus the inter-lane gap, the canvas's own required width floor sat around 1400px *regardless
+     of how little real data was in it* (measured live with just 4 Sources/Destinations — this
+     floor comes from the lane structure itself, not genuinely dense content), well past common
+     1280px/1366px laptop widths, forcing a horizontal scrollbar on every such screen even for a
+     small environment. `min-width`, not the inter-lane `gap` below, is the lever here specifically
+     because it only affects each lane's own card-sizing floor — the gap is load-bearing for the
+     lane-skipping edge-detour geometry's own clear space (see `.flow-canvas-lanes`'s own doc
+     comment) and was left untouched to avoid any risk to that separately, carefully-tuned system. */
+  flex: 1 1 128px;
+  min-width: 128px;
+  max-width: 240px;
+  /* Governs the gap between `.flow-lane-header` (title + search box) and `.flow-lane-nodes` (the
+     card stack) — its only two children — since the search box was reading as part of the same
+     visual group as the first card, not clearly separate from it. */
+  gap: token('spacing.lg');
+}
+
+/* Routes rows show a full filter expression on their own line — needs meaningfully more width
+   than every other lane to avoid truncating those into illegibility. `min-width` lowered from an
+   original 260px alongside the other lanes' own reduction above, for the identical reason — still
+   comfortably wider than every other lane's own new 128px floor. */
+.flow-lane--routes {
+  flex: 1.6 1 225px;
+  min-width: 225px;
+  max-width: 380px;
+}
+
+.flow-lane-header {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+}
+
+.flow-lane-title {
+  display: flex;
+  align-items: baseline;
+  gap: token('spacing.xs');
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.subtle');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.flow-lane-count {
+  font-family: token('core.fontFamily.mono');
+  text-transform: none;
+  letter-spacing: normal;
+  color: token('color.foreground.placeholder');
+}
+
+.flow-lane-search {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  height: token('dimension.component.sm');
+  padding: 0 token('spacing.sm');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  color: token('color.foreground.placeholder');
+}
+
+.flow-lane-search svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.flow-lane-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: token('typography.body.sm.normal');
+  color: token('color.foreground.default');
+}
+
+.flow-lane-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: token('radius.full');
+  background: transparent;
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.flow-lane-search-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+.flow-lane-search-clear:hover {
+  background: token('color.background.neutral.hover');
+  color: token('color.foreground.default');
+}
+
+.flow-lane-search-clear:focus-visible {
+  outline: 2px solid token('color.border.accent.strong');
+  outline-offset: 1px;
+}
+
+.flow-lane-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.lg');
+}
+
+/* Pipeline/Post-Processing only — see the call site's own doc comment. Wide enough that a 2px
+   detour line centered in the gap has real, visible clearance from both neighboring cards. */
+.flow-lane-nodes--detour-gap {
+  gap: token('spacing.2xl');
+}
+
+.flow-lane-empty {
+  font: token('typography.body.sm.normal');
+  color: token('color.foreground.placeholder');
+  padding: token('spacing.md');
+  border: 1px dashed token('color.border.neutral.subtle');
+  border-radius: token('radius.xl');
+  text-align: center;
+}
+
+.edge-line {
+  fill: none;
+  pointer-events: none;
+  transition:
+    opacity token('motion.duration.medium.1') token('motion.easing.standard'),
+    stroke-width token('motion.duration.medium.1') token('motion.easing.standard');
+}
+
+/* `color` is set alongside `stroke` on each variant so `.edge-line--active`'s
+   `drop-shadow(currentColor)` glow below picks up the same hue as the line itself. */
+.edge-line--success {
+  stroke: token('color.background.success.solid.default');
+  color: token('color.background.success.solid.default');
+}
+
+.edge-line--warning {
+  stroke: token('color.background.warning.solid.default');
+  color: token('color.background.warning.solid.default');
+}
+
+.edge-line--danger {
+  stroke: token('color.background.danger.solid.default');
+  color: token('color.background.danger.solid.default');
+}
+
+.edge-line--default {
+  stroke: token('color.background.neutral.solid.default');
+  color: token('color.background.neutral.solid.default');
+}
+
+.edge-line--dimmed {
+  opacity: 0.15;
+}
+
+/* The hovered path itself — bolder stroke plus a soft glow, so it reads as "this one" at a
+   glance rather than just "the others got dimmer." */
+.edge-line--active {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.edge-line--disabled {
+  stroke-dasharray: 4 4;
+  opacity: 0.4;
+}
+
+/* Real events flowing through this specific connection right now — see `edgeSourceIds`
+   (`FlowCanvas.tsx`) for exactly what "flowing" means per edge shape. A configured-but-currently-
+   inactive connection instead gets the plain `.edge-line--default` (grey) class above, applied at
+   the same render call. */
+.edge-line--config {
+  stroke: token('color.background.accent.solid.default');
+}
+
+/* Route rule rows' own end-to-end hover highlight — same visual values as `.node-card--highlighted`/
+   `.node-card--dimmed` above, reused here under their own class names since a rule `<li>` isn't a
+   `.node-card` itself. */
+.route-rules-list li.route-rule-highlighted {
+  box-shadow:
+    0 0 0 2px token('color.border.accent.strong'),
+    token('shadow.low.down');
+}
+
+.route-rules-list li.route-rule-dimmed {
+  opacity: 0.35;
+}
+
+/* Wraps a rule row's own Enabled/Disabled square and its (optional) Final tag as one right-aligned
+   group — `margin-left: auto` lives on this wrapper, not on `.route-rule-final` itself, which
+   already carries its own `margin-left: auto` for the no-square case. Since the wrapper hugs only
+   its own two children (no `flex-grow`), Final's own auto-margin has no extra space left to
+   consume once it's inside here, so the two sit flush together with just this wrapper's own small
+   `gap` — not fighting each other, not double-pushed apart. */
+.route-rule-row-actions {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  margin-left: auto;
+}
+
+/* Matches the Enabled/Disabled square's own fixed 16px height exactly, so the two sit at the same
+   visual size next to each other — `.route-rule-final` only sizes itself from padding + line-
+   height, with no explicit height of its own. Scoped through this wrapper (not a bare
+   `.route-rule-final` override) so nothing changes for a Final tag with no square beside it. */
+.route-rule-row-actions .route-rule-final {
+  box-sizing: border-box;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  padding: 0 token('spacing.sm');
+}
+
+/* The Routes card itself stays non-interactive (it has no single in/out/attribution of its own —
+   each rule row is its own component instead); every other node card, and each individual rule
+   row, opens the detail drawer on click. */
+.flow-canvas .node-card {
+  cursor: default;
+}
+
+/* Stands in for the Routes lane's own omitted search box — same height as `.flow-lane-search`
+   above, so `.flow-lane-header` still occupies the identical total height on every lane and every
+   lane's own `.flow-lane-nodes` starts at the same Y position, keeping Routes level with its
+   neighbors. */
+.flow-lane-search-spacer {
+  height: token('dimension.component.sm');
+}
+
+/* A rule row that opens the detail drawer on click (every rule row does — the Routes *card* itself
+   doesn't, see above). */
+.route-rule-clickable {
+  cursor: pointer;
+}
+
+.route-rule-clickable:hover {
+  box-shadow: token('shadow.low.down');
+}
+
+.route-rule-clickable:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+/* One right-aligned group — error badge, worker-alert badge, the Enabled/Disabled square, then
+   the redirect icon — sits in `.node-card-top`'s own flex row via `margin-left: auto` on this
+   wrapper, not absolutely positioned, so it can never overlap a long label. */
+.node-card-top-actions {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Enabled/Disabled, as a single letter in a colored square — real config fact
+   (`RawInput.disabled`/`RawOutput.disabled`), not an inferred status. 16x16, matching the redirect
+   icon's own *visible* 16px glyph (and the error/worker-alert badges beside it) exactly, rather
+   than that icon's larger 24x24 hit-area box — this square is a plain status indicator, not an
+   interactive control, so it has no WCAG hit-area minimum to preserve the way a real button does. */
+.node-card-status-square {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: token('radius.md');
+  font-family: token('core.fontFamily.mono');
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.node-card-status-square--enabled {
+  border: 1px solid token('color.background.success.solid.default');
+  background: token('color.background.success.subtle');
+  color: token('color.foreground.success.default');
+}
+
+.node-card-status-square--disabled {
+  border: 1px solid token('color.border.neutral.strong');
+  background: token('color.background.neutral.subtle');
+  color: token('color.foreground.subtle');
+}
+
+/* Traffic-flow animation overlays — see `FlowAnimationOverlay`/`FlowAnimationStyle`
+   (FlowCanvas.tsx) for exactly when these render. `offset-path`-driven shapes (dots/comet)
+   move along the same `d` string the underlying edge already draws; dash-based ones (ants/ribbon/
+   sweep) run on a `pathLength={100}`-normalized copy of it so the same dash numbers read
+   consistently regardless of a given edge's own real on-screen length. */
+.flow-anim-dot,
+.flow-anim-comet {
+  fill: token('color.background.accent.solid.default');
+  pointer-events: none;
+  animation-name: flow-anim-dotmove;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.flow-anim-comet {
+  filter: drop-shadow(0 0 4px token('color.background.accent.solid.default'));
+}
+
+@keyframes flow-anim-dotmove {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+.flow-anim-ants,
+.flow-anim-ribbon,
+.flow-anim-sweep {
+  fill: none;
+  stroke: token('color.background.accent.solid.default');
+  pointer-events: none;
+}
+
+.flow-anim-ants {
+  stroke-width: 2px;
+  stroke-dasharray: 4 5;
+  animation: flow-anim-dashmove 0.9s linear infinite;
+}
+
+.flow-anim-ribbon {
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-dasharray: 14 10;
+  animation: flow-anim-dashmove 1.6s linear infinite;
+}
+
+.flow-anim-sweep {
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-dasharray: 20 80;
+  animation: flow-anim-sweepmove 1.3s linear infinite;
+}
+
+@keyframes flow-anim-dashmove {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@keyframes flow-anim-sweepmove {
+  from {
+    stroke-dashoffset: 30;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-anim-dot,
+  .flow-anim-comet,
+  .flow-anim-ants,
+  .flow-anim-ribbon,
+  .flow-anim-sweep {
+    animation-duration: 6s !important;
+  }
+}

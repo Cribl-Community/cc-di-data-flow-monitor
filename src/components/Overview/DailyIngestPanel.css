@@ -1,0 +1,41 @@
+/* Compound selector (not just `.ov-ingest-body`) — same specificity-tie reasoning documented
+   elsewhere in this app (e.g. `.ov-panel-body.ov-svt-body`) so this reliably beats the shared
+   `.ov-panel-body` rule regardless of stylesheet load order. `display: flex; flex-direction:
+   column; min-height: 0` (mirroring the License page's own `.lic-panel-body`) is what lets
+   `LicenseUsageChart`'s own `flex: 1` chart/svg actually grow to fill this panel's real height
+   instead of collapsing to its natural (near-zero) content size. */
+.ov-panel-body.ov-ingest-body {
+  padding: token('spacing.md');
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Smaller than the shared `.segmented` control's own default 32px height — this one small toggle
+   sits inline with a compact panel-header row, not the top-level control bar, so it reads better
+   compact. `dimension.component.xs` (16px), not `.sm` (24px) — at 24px this control was taller
+   than the header row's own text line height, which made it the tallest thing in the row and
+   forced this one panel's header noticeably taller than every sibling panel's own header row (none
+   of which have a control in their own header at all). At 16px it sits inside the header's normal
+   text-driven height instead of dictating it. Compound selectors (not bare `.ov-ingest-range`/
+   `button` overrides), matching every other case in this codebase where a shared class needs a
+   page-local size variant — see `.node-detail-card-actions.segmented` (`NodeDetailPanel.css`) for the
+   identical, already-proven pattern this one is copied from. */
+.ov-ingest-range.segmented {
+  height: token('dimension.component.xs');
+}
+
+.ov-ingest-range.segmented button {
+  padding: 0 token('spacing.sm');
+  font: token('typography.body.xs.semibold');
+}
+
+.ov-ingest-empty {
+  padding: token('spacing.lg');
+  text-align: center;
+  color: token('color.foreground.subtle');
+  font: token('typography.body.sm.normal');
+  flex: 1;
+}

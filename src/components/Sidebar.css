@@ -1,0 +1,278 @@
+/* Merged with `.app-content` into one panel — no right border or shadow of its own (a shadow
+   would fall right at the seam, which reads as a stray line rather than elevation) and only the
+   left corners keep the outer rounding; the right corners are square where it now sits flush
+   against the main content. The remaining border serves as the one delineation line between them.
+   Background is `neutral.subtle` (a step darker than the plain white viz canvas in `.app-content`
+   body), matching `.page-header`'s own background — chrome reads as a visibly distinct shade from
+   the working canvas instead of blending into it. */
+.app-sidebar {
+  border: token('border.default');
+  border-right: none;
+  border-radius: token('radius.xl') 0 0 token('radius.xl');
+  background: token('color.background.neutral.subtle');
+  flex-shrink: 0;
+}
+
+/* Real logo images now (see `Sidebar.tsx`), not a colored square behind "D"/"DI" text — the old
+   `background`/`color` pairing existed only to give that placeholder text something to sit on top
+   of, so it's gone.
+
+   This outer box's own height is a *constant* `dimension.component.md` (32px) in both collapsed
+   and expanded states, and never transitions — it used to grow to 60px when expanded, which (since
+   this is the first child in the sidebar's own top-to-bottom flex column) pushed the nav list below
+   it down by that same 28px during the transition, and left it sitting 28px lower at rest once
+   expanded. Real bug, caught live from an actual screenshot, not assumed.
+
+   Its own `width` still transitions, alongside — not instead of — `.brand-mark-clip`'s own
+   identical transition below. Real bug, also caught live: a first pass moved the width transition
+   onto `.brand-mark-clip` alone, on the assumption that this element's own width no longer mattered
+   visually. It still matters for *layout*: `.brand-mark-clip` is `position: absolute`, so it's
+   taken out of flow and doesn't contribute to this element's own sizing at all — without its own
+   transition, this box's `width` was jumping instantly between 32px and 148px the moment the
+   collapsed/expanded class changed, and since it's a flex child with no other content, that instant
+   jump forced the *whole sidebar rail's* own rendered width to instantly follow it — even though
+   Capra's own `min-width` transition (on the rail itself) was still animating smoothly underneath,
+   completely masked because the rail's actual width was already pinned by this element's own
+   sudden jump. This is exactly why collapsing looked fine but expanding didn't: collapsing starts
+   from a *wide* rail (`min-width` already high), so this box's own instant *shrink* to 32px never
+   became the binding constraint — the still-high `min-width` stayed dominant the whole way down.
+   Expanding starts from a *narrow* rail, so this box's instant *growth* to 148px immediately
+   exceeded the still-low `min-width`, becoming the binding constraint immediately and making the
+   whole rail snap wide in one frame. Giving this element the same transition as its own inner clip
+   wrapper keeps both animating in lockstep with Capra's own `min-width`, in both directions. */
+.brand-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: token('spacing.md');
+  /* Extra room below, on top of the `spacing.md` the margin above already gives — a plain equal
+     margin on every side read as if the logo belonged to the nav list right underneath it, rather
+     than being its own distinct header region. Bumped from `spacing.lg` to `spacing.xl` per
+     follow-up feedback that the gap still needed to read more clearly as separation, not just a
+     margin. */
+  margin-bottom: token('spacing.xl');
+  border-radius: token('radius.md');
+  flex-shrink: 0;
+  height: token('dimension.component.md');
+  transition: width var(--cds2-motion-duration-medium-2) linear;
+}
+
+.brand-mark--collapsed {
+  width: token('dimension.component.md');
+}
+
+/* 117px = this box's own real content width (32px icon + 8px gap + 77px revealed text crop — the
+   crop's own width grew alongside its height, see `.brand-mark-text`'s own doc comment below), not
+   a ceiling stretched to fill however wide the rail happens to be. That "fill the rail's own width"
+   sizing belonged to the earlier full-wordmark-image version of this mark, which was free to scale
+   up to fill available space; the current text crop is a precise, fixed-size measurement off the
+   real source asset that shouldn't stretch to fit an arbitrary ceiling — sizing this box to its own
+   content instead also means it never needs recalculating again if the rail's own width changes.
+   Still comfortably inside the 160px rail's own real ceiling (~127px, after the rail's own padding/
+   border and this element's own margin) even at this larger size. */
+.brand-mark--expanded {
+  width: 117px;
+}
+
+/* The overflow-clipping element for the reveal effect — deliberately *not* `.brand-mark` itself. A
+   first pass tried `overflow-x: hidden; overflow-y: visible` directly on `.brand-mark` to clip the
+   reveal horizontally while still letting a taller logo spill vertically without being clipped —
+   that produced a real, visible scrollbar in the logo's own corner instead. Root cause: per the
+   CSS Overflow spec, when `overflow-x` and `overflow-y` are set to different *non-default*
+   combinations, a `visible` value on one axis is silently computed as `auto` instead — so
+   `overflow-y: visible` there was actually behaving as `overflow-y: auto`, which shows a scrollbar
+   exactly when content overflows it. The fix is this separate wrapper, sized to `64px` tall —
+   comfortably taller than the revealed text's own 52px rendered height, so nothing inside it ever
+   actually overflows vertically at all, and a plain `overflow: hidden` (both axes identically
+   hidden, not a mismatched pair) never hits that spec quirk and never shows a scrollbar. Centered
+   on `.brand-mark`'s own 32px-tall box via `top: 50%`/`translateY(-50%)`. Its own width transition
+   mirrors `.brand-mark`'s own identical one above — see that rule's own comment for why both need
+   it, not just this one.
+
+   A plain flex row now, not two absolutely-positioned, cross-fading images — the icon and the
+   revealed text no longer overlap the same space (the icon never moves), so there's nothing left
+   to stack or fade between; `align-items: center` alone keeps both vertically centered regardless
+   of their own differing heights, replacing the fragile hand-measured `top` offsets the old
+   overlapping-image version needed to line up two separate copies of the same "D" glyph — a
+   concern that no longer exists now that the wordmark's own embedded "D" is never shown at all
+   (see `.brand-mark-text`'s own doc comment below). */
+.brand-mark-clip {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: token('spacing.sm');
+  overflow: hidden;
+  border-radius: token('radius.md');
+  transition: width var(--cds2-motion-duration-medium-2) linear;
+}
+
+.brand-mark--collapsed .brand-mark-clip {
+  width: token('dimension.component.md');
+}
+
+.brand-mark--expanded .brand-mark-clip {
+  width: 117px;
+}
+
+/* Fixed in place at all times, in both collapsed and expanded states — never fades, never moves.
+   Measured directly from the source (`appIcon_2x.png`), pixel by pixel: its real content already
+   fills the entire 72×72 canvas edge to edge with no internal margin on any side, so — unlike the
+   old overlapping-image version — no hand-measured offset is needed to align it; `object-fit:
+   contain` inside its own plain 32×32 box is enough. */
+.brand-mark-icon {
+  flex-shrink: 0;
+  width: token('dimension.component.md');
+  height: token('dimension.component.md');
+  object-fit: contain;
+}
+
+/* The growing half of the reveal — width alone animates ("Soft Grow" from the reviewed
+   exploration: no extra per-text effect layered on top of the width transition, matching the
+   plainest of the 15 reviewed options). `overflow: hidden` is what keeps `.brand-mark-text` below
+   genuinely invisible at 0 width, not merely visually empty — real content, just clipped away. */
+.brand-mark-reveal {
+  flex-shrink: 0;
+  height: 52px;
+  overflow: hidden;
+  transition: width var(--cds2-motion-duration-medium-2) linear;
+}
+
+.brand-mark--collapsed .brand-mark-reveal {
+  width: 0;
+}
+
+.brand-mark--expanded .brand-mark-reveal {
+  width: 77px;
+}
+
+/* A precise CSS-background crop of the real wordmark PNG (`DI-Logo1-300x137.png`) — not a second
+   copy of the brand name re-typeset in a substitute font. The source bakes its own "D" glyph
+   together with "Discovered Intelligence" in one 300×137 image; measured directly, pixel by pixel,
+   scanning for the first/last non-transparent pixel in every column: the "D" glyph itself ends at
+   x=74, and the words begin at x=98 (a small natural buffer past the glyph, not the literal first
+   lit pixel). `background-size` scales the full source so its height matches this element's own
+   52px (scale = 52/137 ≈ 0.37956 — raised to exactly 52px per direct request, up from an earlier
+   46px; every other number below scaled proportionally from that same new ratio rather than
+   adjusted by feel); `background-position-x` shifts left by that same scale factor applied to the
+   measured x=98 boundary (98 × 0.37956 ≈ 37.20px), landing exactly on where the words start. The
+   icon above already supplies the "D" — this crop is the words alone. */
+.brand-mark-text {
+  width: 77px;
+  height: 52px;
+  background-repeat: no-repeat;
+  background-size: 113.87px 52px;
+  background-position: -37.20px 0;
+}
+
+/* Per explicit direction, the words are plain solid-color text in both themes — white in dark
+   mode, black in light mode — with no backing box behind them at all (reverting the earlier white
+   backing-chip approach this element used to need). Since `.brand-mark-text` isn't real text but a
+   cropped region of a real PNG (dark grey/near-black ink on a transparent ground), "recoloring" it
+   means filtering the image itself rather than setting a CSS `color`. `brightness(0)` first drives
+   every opaque pixel to pure black regardless of its own original grey value (removing any
+   anti-aliased softness, for a crisp flat color rather than a range of greys-turned-tint); chained
+   with `invert(1)` in dark mode only, that black flips to pure white. The image's own alpha
+   channel is untouched by either filter, so the transparent ground stays transparent — no box, no
+   backdrop, exactly the fixed icon beside it. */
+.brand-mark-text {
+  filter: brightness(0);
+}
+
+.dark .brand-mark-text {
+  filter: brightness(0) invert(1);
+}
+
+/* Open/close, at one *constant* speed the whole way through. Capra's own collapse transition uses
+   `--cds2-motion-duration-medium-2` (a stock 300ms) on the nav container's `min-width`/`padding`
+   and separately on each nav item's `width`/`height`/`gap`/`padding` and the label's `opacity`/
+   `max-width` — overriding that one shared variable here, scoped to `.app-sidebar`, changes every
+   one of those at once (custom properties cascade to descendants, so nothing per-rule needs
+   touching) and, since the brand mark's own reveal further up this file deliberately reuses the
+   exact same variable, keeps the mark and the rail moving in lock-step too, still with no separate
+   wiring. An earlier round slowed this to 500ms per "too fast" feedback at the time; per direct
+   follow-up direction to speed it back up, it's now 220ms — faster than even Capra's own 300ms
+   stock value, not just back to it.
+   Two easing curves were tried and explicitly rejected before landing on `linear` here. Capra's own
+   default is a plain "ease"; an earlier round swapped that for `cubic-bezier(0.16, 1, 0.3, 1)`
+   ("expo-out": instant acceleration, gentle stop only at the end) per "smoother start and finish"
+   feedback, then `cubic-bezier(0.65, 0, 0.35, 1)` ("ease-in-out-cubic": gentle at *both* ends) once
+   that reported "the start" specifically still felt abrupt. Both still visibly *change speed*
+   mid-transition (slow-fast-slow), which is exactly what the next round of feedback called out —
+   "the start and finish are smooth however the rest of the process is still fast" — i.e. the
+   complaint wasn't about which portion was slow, it was that speed changed at all partway through.
+   `linear` is the one curve with no speed change anywhere in its own range, applied identically to
+   every rule below (same reasoning as before: nothing should fall out of sync partway through).
+   Targets Capra's own internal class names directly since there's no supported prop for this; if a
+   future @capra/core upgrade renames them, these rules simply stop matching and the collapse
+   quietly reverts to Capra's stock timing rather than breaking anything. */
+/* `--cds-vertical-nav-width` is Capra's own real, documented override point for the expanded rail's
+   width (`@capra/theme`'s own base stylesheet: "Default expanded width of the navigation panel"),
+   180px by default. Reduced to 160px per direct request — measured live (a detached, unconstrained
+   probe span cloned from each real label's own computed font, not guessed) that the widest label
+   at the time only needed ~79px of its own intrinsic text width; adding the icon (24px), the gap
+   beside it (8px), the item's own inline padding (16px), the nav list's own padding (2px), and this
+   rail's own outer padding/border (17px) totalled ~146px — 160px kept a real ~14px margin rather
+   than clipping right at the theoretical minimum. Re-confirmed live after the nav item set changed
+   (License Usage removed): every current label, including the longer "Signal Path (Temp)," still
+   renders with zero overflow at this same 160px. */
+.app-sidebar {
+  --cds2-motion-duration-medium-2: 220ms;
+  --cds-vertical-nav-width: 160px;
+}
+
+.app-sidebar,
+.app-sidebar .capra-VerticalNavigation-module-uKaYXq-item,
+.app-sidebar .capra-VerticalNavigation-module-uKaYXq-label {
+  transition-timing-function: linear;
+}
+
+/* Icon size + alignment, collapsed rail. Two things were wrong, found by measuring rather than
+   guessing: (1) nav items, the Settings/Help items (now the same component since Settings became
+   a page — see SettingsPage.tsx), and the Collapse toggle are two different Capra component types
+   that each pick their own icon size, so nothing matched; forcing the rendered SVG box to one
+   consistent size fixes that directly. (2) Capra's own collapsed-state item width (~24px) and the
+   list/footer's own asymmetric padding are tuned for a specific smaller icon and don't account for
+   this app's own brand mark being wider than Capra's collapsed-width formula assumes — so every
+   item's 24px box sat off to the left of a visibly wider rail. Overriding items to fill the full
+   available width and centering within *that*, plus zeroing the list/footer's own asymmetric
+   padding, centers every icon on the same line across the rail's actual width.
+
+   Icon size set to `dimension.icon.md` (24px, Capra's own "default standalone icon size" token) —
+   down from a hardcoded 26px reached by several earlier rounds' worth of incremental "still too
+   small" bumps (18→22→26px). These are real vector SVGs already (`@capra/icons`, plus this app's
+   own hand-drawn ones), so scaling itself never introduces raster blur — but every one of them was
+   authored/exported for a icon-sized (16-24px) grid, and stretching that same path data well past
+   its native proportions makes hairline strokes read soft at a glance, which is what "fuzzy" was
+   actually describing here. Settling back on Capra's own intended default size, together with the
+   brand mark shrinking to match below, is what actually fixes that — not a different icon format. */
+.app-sidebar svg {
+  width: token('dimension.icon.md');
+  height: token('dimension.icon.md');
+}
+
+.app-sidebar[data-collapsed='true'] .capra-VerticalNavigation-module-uKaYXq-list,
+.app-sidebar[data-collapsed='true'] .capra-VerticalNavigation-module-uKaYXq-footer {
+  padding-inline: 0;
+}
+
+/* The Collapse toggle shares this exact same Capra class with every nav/footer item (confirmed by
+   measuring its rendered `className`), so this one rule covers it too — no separate override
+   needed for it. Height matches `dimension.component.md` (32px) — enough to fit the 24px icon
+   without clipping (the item has `overflow: hidden`) while narrowing the rail from its previous
+   36px-tall/26px-icon footprint. */
+.app-sidebar[data-collapsed='true'] .capra-VerticalNavigation-module-uKaYXq-item {
+  width: 100%;
+  height: token('dimension.component.md');
+  justify-content: center;
+}
+
+/* Top nav items get extra breathing room between them (spacing.md, up from Capra's default
+   spacing.sm); the footer (Settings/Help) deliberately keeps Capra's stock gap per explicit
+   feedback — only the icon size, not the spacing, should change down there. */
+.app-sidebar .capra-VerticalNavigation-module-uKaYXq-list {
+  gap: token('spacing.md');
+}

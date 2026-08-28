@@ -1,0 +1,196 @@
+/* 9 columns, matching the row's own real card count (License, Worker Groups/Fleets, Workers/
+   Nodes, Total Sources, Total Destinations, Active Flows, Volume In, Volume Out, Reduction) — kept
+   in sync with the real card count deliberately (see the git history for the "phantom column"
+   bug an earlier stale count once caused: the row silently reserved extra width on the right and
+   never actually reached the page's own edge). */
+.overview-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: token('spacing.md');
+}
+
+@media (max-width: 1500px) {
+  .overview-kpi-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .overview-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ov-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+  padding: token('spacing.sm') token('spacing.md');
+  background: token('color.background.panel.solid');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+}
+
+/* A clickable KPI renders as a real `<button>` (see `Kpi`'s own `onClick` doc comment) — element
+   selector + class, not just the class, so this reliably resets the browser's own native button
+   UA styles (font, text-align, cursor) rather than losing a same-specificity tie to them.
+   `color: inherit` is deliberate, not incidental: a plain `<button>` carries its own UA default
+   `color` (Chromium's `buttontext`, which resolves to a near-black regardless of page theme) that
+   silently wins over inherited/token color for every descendant unless explicitly reset — this is
+   what made this card's own value text render black-on-black in dark mode until measured live and
+   caught (every other custom button in this app, e.g. `.segmented button`, already sets its own
+   explicit `color` for the same reason). */
+button.ov-kpi {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition:
+    border-color token('motion.duration.short') token('motion.easing.standard'),
+    background token('motion.duration.short') token('motion.easing.standard');
+}
+
+.ov-kpi--clickable:hover {
+  border-color: token('color.border.accent.strong');
+  background: token('color.background.accent.subtle');
+}
+
+.ov-kpi--clickable:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+.ov-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ov-kpi-label {
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+}
+
+.ov-kpi-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: token('radius.md');
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ov-kpi-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ov-kpi-icon--accent {
+  background: token('color.background.accent.subtle');
+  color: token('color.foreground.accent.default');
+}
+
+.ov-kpi-icon--success {
+  background: token('color.background.success.subtle');
+  color: token('color.foreground.success.default');
+}
+
+.ov-kpi-icon--neutral {
+  background: token('color.background.neutral.subtle');
+  color: token('color.foreground.subtle');
+}
+
+/* `!important` deliberate — Capra's `Text` sets its own `font` shorthand at the same specificity a
+   plain class selector has (the same reasoning documented on `.node-card-stat-value` and every
+   other numeric-value override in this app); numbers get the monospace/code face per the
+   app-wide typography split, tabular so they don't jitter as digits change on refresh. */
+.ov-kpi-value {
+  font-family: token('core.fontFamily.mono') !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wraps `.ov-kpi-sub` alone for every non-clickable card (a single flex child changes nothing
+   visually — no extra margin/padding of its own) and additionally holds `.ov-kpi-pivot` for the
+   one clickable card, so the redirect-icon affordance sits on the same row as the subtext instead
+   of needing its own line. */
+.ov-kpi-sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.xs');
+  min-width: 0;
+}
+
+.ov-kpi-sub {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ov-kpi-sub b {
+  font-family: token('core.fontFamily.mono');
+  font-weight: 700;
+  color: token('color.foreground.default');
+}
+
+/* The License card's own "value" line — a limit-plus-status sentence ("100 GB/day (Expires ...)"),
+   not a bare number, so it deliberately skips `.ov-kpi-value`'s mono/tabular-nums treatment (built
+   for digits alone) and sits at a smaller, normal-weight size instead. Truncates with an ellipsis
+   rather than wrapping (the same `.ov-kpi-sub` convention every other card's own subtext already
+   uses) — this card only has room for one value line before it grows taller than its 7 siblings in
+   the same grid row, and the combined limit+expiry sentence is long enough to genuinely need it at
+   the row's narrower column widths. The full text is still available via the element's own
+   `title`. */
+.ov-kpi-license-value {
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.default');
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Just the parenthesized "(Expires ...)" portion — the daily-limit figure ahead of it stays plain
+   default text, since only the expiry date is a real status here. Tone classes mirror the License
+   page's own `.lic-expiry--*` urgency coloring (green >= 6mo out, orange 3-6mo, red < 3mo/expired)
+   via the same shared `expiryTone()`. */
+.ov-kpi-license-expiry-inline--success {
+  color: token('color.foreground.success.default');
+}
+
+.ov-kpi-license-expiry-inline--warning {
+  color: token('color.foreground.warning.default');
+}
+
+.ov-kpi-license-expiry-inline--danger {
+  color: token('color.foreground.danger.default');
+}
+
+/* Icon-only now — matches the glyph Signal Path's NodeCard uses for its own "Open in Cribl"
+   redirect icon (`ArrowUpRightFromSquare`), just decorative here rather than a nested `IconButton`
+   (see `Kpi`'s own doc comment for why: the whole card is already the one real button). The
+   accessible name lives on the card's own `aria-label` instead of visible text. */
+.ov-kpi-pivot {
+  display: none;
+  align-items: center;
+  color: token('color.foreground.accent.default');
+  flex-shrink: 0;
+}
+
+.ov-kpi-pivot svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Only appears on hover/focus — a permanently-visible icon on every render would compete with
+   the number for attention on the one card in the row that has it; showing it only when the card
+   is actually being interacted with keeps the KPI row's default state uniform. */
+.ov-kpi--clickable:hover .ov-kpi-pivot,
+.ov-kpi--clickable:focus-visible .ov-kpi-pivot {
+  display: flex;
+}

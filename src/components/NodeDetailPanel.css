@@ -1,0 +1,528 @@
+.node-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.lg');
+}
+
+.node-detail-header {
+  display: flex;
+  gap: token('spacing.md');
+  align-items: center;
+}
+
+/* Ledger direction: the drawer's own status word as plain bold text, matching the canvas card
+   and rule-row convention — no filled Pill. `.default` foreground steps are built for text on a
+   plain background (unlike `.solid`, tuned for white text on a fill), so this stays legible in
+   both themes without a background at all. */
+.node-detail-status {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.node-detail-status--success {
+  color: token('color.foreground.success.default');
+}
+
+.node-detail-status--warning {
+  color: token('color.foreground.warning.default');
+}
+
+.node-detail-status--danger {
+  color: token('color.foreground.danger.default');
+}
+
+.node-detail-status--default {
+  color: token('color.foreground.neutral.default');
+}
+
+/* A section's own title `<Text as="p">` immediately followed by a value/status `<Text>` — without
+   this, Capra's `Text` applies `all: unset` internally, which resets a `<p>`'s default `display:
+   block` back to its CSS-initial value (`inline`), so the two run together on one line with no
+   space between them ("Persistent QueueGreen", "Processing Errors7") instead of the title reading
+   as its own line above the value — the exact same failure mode already found and fixed once for
+   Settings' own name/description rows (see CLAUDE.md's Fifteenth round). Found live here for
+   Persistent Queue while adding the new Processing Errors section right below it, which copied
+   the same (until now unnoticed) broken structure — fixed in both places at once. */
+.node-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+}
+
+.node-detail-dual-stats {
+  border-collapse: collapse;
+  font: token('typography.body.sm.normal');
+}
+
+.node-detail-dual-stats th,
+.node-detail-dual-stats td {
+  text-align: left;
+  padding: token('spacing.xs') token('spacing.lg') token('spacing.xs') 0;
+}
+
+.node-detail-dual-stats th {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+  font-weight: 400;
+}
+
+/* Stats, not prose — same mono/tabular treatment as every other numeric figure app-wide (see
+   NodeCard.css's `.node-card-stat-value` for the full reasoning). Plain `<td>` elements, not
+   Capra `Text` components, so no specificity conflict here — no `!important` needed. */
+.node-detail-stat-value {
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+}
+
+.node-detail-trend {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+  color: token('color.foreground.accent.default');
+}
+
+.node-detail-table-scroll {
+  overflow-x: auto;
+}
+
+.node-detail-rules-table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font: token('typography.body.sm.normal');
+  margin-top: token('spacing.sm');
+}
+
+/* Qualified with the table's own class, not a bare `.node-detail-source-time-cell` — matches
+   `.node-detail-rules-table th`/`td`'s own two-class specificity below, which would otherwise
+   silently win on source order alone (the same specificity pitfall this project has hit several
+   times before). */
+.node-detail-rules-table th.node-detail-source-time-cell,
+.node-detail-rules-table td.node-detail-source-time-cell {
+  text-align: right;
+}
+
+.node-detail-rules-table th,
+.node-detail-rules-table td {
+  text-align: left;
+  padding: token('spacing.sm');
+  border-bottom: token('border.default');
+}
+
+.node-detail-rules-table tr.is-disabled {
+  opacity: 0.5;
+}
+
+/* Each rule's own status becomes a colored left edge for *that row*, mirroring the canvas card's
+   per-rule treatment — Routes has no single aggregate status to put on the table as a whole. */
+.node-detail-rules-table tbody tr {
+  border-left: 3px solid token('color.background.neutral.solid.default');
+}
+
+.node-detail-rules-table tbody tr td:first-child {
+  padding-left: token('spacing.sm');
+}
+
+/* The Status column — same text-only convention as `.node-detail-status`, so a row's status is
+   readable directly from the table instead of only a mouse-hover tooltip or the row's own color.
+   It's the table's last column, right-aligned to sit at the row's extreme right edge. */
+.node-detail-rules-table th:last-child,
+.node-detail-status-cell {
+  text-align: right;
+}
+
+.node-detail-status-cell {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.node-detail-status-cell--success {
+  color: token('color.foreground.success.default');
+}
+
+.node-detail-status-cell--warning {
+  color: token('color.foreground.warning.default');
+}
+
+.node-detail-status-cell--danger {
+  color: token('color.foreground.danger.default');
+}
+
+.node-detail-status-cell--default {
+  color: token('color.foreground.neutral.default');
+}
+
+/* Qualified with `tbody tr` to MATCH `.node-detail-rules-table tbody tr` above's specificity
+   (0,1,2) — at the lower 0,1,0 these had before, the base rule's neutral border-left always won
+   regardless of source order, since higher specificity beats declaration order. Same root cause
+   as the matching bug in NodeCard.css's canvas-card rows. */
+.node-detail-rules-table tbody tr.node-detail-rule-row--success {
+  border-left-color: token('color.background.success.solid.default');
+}
+
+.node-detail-rules-table tbody tr.node-detail-rule-row--warning {
+  border-left-color: token('color.background.warning.solid.default');
+}
+
+.node-detail-rules-table tbody tr.node-detail-rule-row--danger {
+  border-left-color: token('color.background.danger.solid.default');
+}
+
+.node-detail-rules-table tbody tr.node-detail-rule-row--default {
+  border-left-color: token('color.background.neutral.solid.default');
+}
+
+/* Cribl's own implicit "no rule claimed this" fallback (see `GraphNode.endRoute`'s own doc
+   comment) — a hairline top border sets it apart from the real, user-configured rules above it,
+   matching the canvas card's own identical treatment. */
+.node-detail-rules-table tbody tr.node-detail-rule-row--end-route td {
+  border-top: 1px solid token('color.border.neutral.subtle');
+  padding-top: token('spacing.sm');
+}
+
+.node-detail-rule-row--end-route .node-detail-name-cell em {
+  color: token('color.foreground.subtle');
+}
+
+.node-detail-functions-table {
+  width: 100%;
+  min-width: 360px;
+  border-collapse: collapse;
+  font: token('typography.body.sm.normal');
+  margin-top: token('spacing.sm');
+}
+
+.node-detail-functions-table th,
+.node-detail-functions-table td {
+  text-align: left;
+  padding: token('spacing.sm');
+  border-bottom: token('border.default');
+  vertical-align: top;
+}
+
+.node-detail-functions-table tr.is-disabled {
+  opacity: 0.5;
+}
+
+.node-detail-function-filter-cell,
+.node-detail-rule-filter {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.subtle');
+  word-break: break-word;
+}
+
+/* The per-worker status table's own Detail cell: Cribl's own stable, human-written `message` on
+   its own line, plus — when Cribl's response actually includes one — the real underlying failure
+   text (`details.error`, e.g. "connect ECONNREFUSED 127.0.0.1:9997") on a second line below it,
+   rather than concatenated into one line or losing the underlying detail entirely. The message
+   line overrides the cell's own default mono/muted styling (meant for filter expressions) back to
+   plain readable text; the underlying line keeps that same mono/muted treatment, since it reads as
+   the more technical, secondary half of the two. */
+.node-detail-worker-error {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.node-detail-worker-error-message {
+  font-family: token('core.fontFamily.sans');
+  color: token('color.foreground.default');
+}
+
+.node-detail-worker-error-underlying {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.subtle');
+  font-size: 11px;
+}
+
+.node-detail-function-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: token('spacing.xs');
+}
+
+/* The Name + Final pairing in the Rules table — Final sits immediately next to the name it
+   belongs to, matching the canvas card's own row layout (see `.route-rule-final` in NodeCard.css
+   for the full reasoning behind this exact treatment). */
+.node-detail-name-cell {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.sm');
+}
+
+.node-detail-flag {
+  font: token('typography.body.xs.normal');
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* A sharp-cornered rectangle, not a pill — deliberately prominent since Final changes routing/
+   function-evaluation behavior. Same accent `.subtle` fill + `.default` text pairing as the canvas
+   card's Final tag (confirmed ~4.7:1 light / ~10:1 dark) rather than the `.solid`-behind-white-text
+   pill this used to be, which measured 3.26:1 and failed WCAG AA at this font size. */
+.node-detail-flag--final {
+  padding: 1px token('spacing.sm');
+  border: 1px solid token('color.background.accent.solid.default');
+  background: token('color.background.accent.subtle');
+  color: token('color.foreground.accent.default');
+}
+
+.node-detail-flag--disabled {
+  color: token('color.foreground.neutral.default');
+}
+
+/* `.node-detail-functions-table td.node-detail-function-errors-cell` (class+element+class), not a
+   bare class — the base `.node-detail-functions-table td` rule above is already class+element
+   (0,1,1), which would outrank a plain `.node-detail-function-errors-cell` (0,1,0) regardless of
+   source order, the same specificity pitfall documented elsewhere in this app. */
+.node-detail-functions-table td.node-detail-function-errors-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.node-detail-function-errors-count {
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: token('color.foreground.subtle');
+}
+
+/* `button.` prefix (element + class, 0,1,1) — the nonzero case renders as `FunctionErrorHover`'s
+   own `<button class="function-error-trigger ...">`, whose base rule sets `color: inherit` at the
+   same 0,1,0 a bare `.node-detail-function-errors-count--danger` would have, which would lose that
+   tie on source order alone (see `button.node-card-err-badge`'s own identical fix in NodeCard.css). */
+button.node-detail-function-errors-count--danger {
+  color: token('color.foreground.danger.default');
+  font-weight: 700;
+}
+
+/* A bordered card wrapping one section's own real content — sits directly below that section's own
+   `.node-detail-section-head`, both children of the shared `.node-detail-section` (spacing.xs gap
+   keeps the heading visually attached without merging into it; the surrounding `.node-detail-panel`
+   supplies the larger gap *between* sections). */
+.node-detail-card {
+  display: flex;
+  flex-direction: column;
+  background: token('color.background.panel.solid');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  overflow: hidden;
+}
+
+.node-detail-card-body {
+  padding: token('spacing.md');
+}
+
+.node-detail-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.sm');
+}
+
+.node-detail-section-title {
+  font: token('typography.body.sm.semibold');
+}
+
+/* Leads the drawer, ahead of every other section — the plain-language answer to "why is this
+   component in the state its own status header already shows," not a restatement of that status
+   in different words. Background/label color are set entirely by the `--warning`/`--danger`
+   modifier below, matching whichever real status this box is currently explaining (this box only
+   ever renders for a real, non-healthy cause). */
+.node-detail-why-box {
+  border-radius: token('radius.lg');
+  padding: token('spacing.md');
+}
+
+.node-detail-why-box--danger {
+  background: token('color.background.danger.subtle');
+}
+
+.node-detail-why-box--danger .node-detail-why-label {
+  color: token('color.foreground.danger.default');
+}
+
+.node-detail-why-box--warning {
+  background: token('color.background.warning.subtle');
+}
+
+.node-detail-why-box--warning .node-detail-why-label {
+  color: token('color.foreground.warning.default');
+}
+
+.node-detail-why-label {
+  display: block;
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: token('spacing.xs');
+}
+
+.node-detail-why-box p {
+  margin: 0;
+  font: token('typography.body.sm.normal');
+  color: token('color.foreground.default');
+}
+
+/* Qualified with the parent's own class (not just `.node-detail-why-blocked-since` alone) so this
+   wins the specificity tie against `.node-detail-why-box p` above, rather than losing to it on
+   source order — the same class of bug this project has hit and fixed several times before. */
+.node-detail-why-box p.node-detail-why-blocked-since {
+  margin-top: token('spacing.xs');
+  color: token('color.foreground.subtle');
+}
+
+.node-detail-why-blocked-since-value {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.default');
+}
+
+/* "Open in Cribl" — reachable from inside the Why box too, not a second concept. */
+.node-detail-why-actions {
+  display: flex;
+  gap: token('spacing.sm');
+  margin-top: token('spacing.sm');
+}
+
+.node-detail-empty {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.placeholder');
+}
+
+/* --- Generic data table (Volume/Sources/Functions/Persistent Queue/Per-worker status), distinct
+   from `.node-detail-rules-table`/`.node-detail-functions-table` above (which carry their own
+   fixed column layout) since these tables share one flexible left/num/right cell-alignment
+   system instead. Mirrors the License page's own Top Sources table treatment. --- */
+.node-detail-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.node-detail-data-table th {
+  padding: token('spacing.sm') token('spacing.md');
+  border-bottom: token('border.default');
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+  white-space: nowrap;
+}
+
+.node-detail-th-left {
+  text-align: left;
+}
+
+.node-detail-th-num {
+  text-align: right;
+}
+
+/* Vertical padding trimmed further still — 3px, a bit under `spacing.sm` (4px), no token sits
+   between `spacing.xs` (2px) and `spacing.sm` — a real, deliberate row-height reduction so more
+   rows fit in the drawer's own limited height without scrolling. `vertical-align: middle` keeps
+   every cell's own content centered within the row's line-box height even when a sibling cell in
+   the same row (e.g. a multi-line worker error detail) is taller. */
+.node-detail-data-table td {
+  padding: 3px token('spacing.md');
+  border-bottom: token('border.default');
+  vertical-align: middle;
+  font: token('typography.body.sm.normal');
+}
+
+.node-detail-data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.node-detail-data-table tr:hover td {
+  background: token('color.background.neutral.subtle');
+}
+
+.node-detail-td-left {
+  text-align: left;
+  word-break: break-word;
+}
+
+.node-detail-td-num {
+  text-align: right;
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Right-aligned, but not monospace/tabular — for a plain-text right-aligned column (e.g. Last
+   Event's own timestamp string) that shouldn't pick up `.node-detail-td-num`'s numeric-column
+   styling. */
+.node-detail-td-right {
+  text-align: right;
+}
+
+/* --- Sources table's own local Events/Bytes switcher --- */
+.node-detail-card-actions {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.sm');
+}
+
+/* Smaller than the shared `.segmented` control's own default 32px height — this one small toggle
+   sits inline with a section heading, not in a top-level control bar, so it reads better compact.
+   Compound selector (not a bare `.node-detail-card-actions`/`button` override), matching every
+   other case in this codebase where a shared class needs a page-local size variant: `.segmented`/
+   `.segmented button` are equal-or-lower specificity, so a bare override could silently lose the
+   cascade tie depending on which stylesheet happens to load later. */
+.node-detail-card-actions.segmented {
+  height: token('dimension.component.sm');
+}
+
+.node-detail-card-actions.segmented button {
+  padding: 0 token('spacing.md');
+}
+
+/* --- Per-worker status / Persistent Queue tables: a colored left edge per row, the same
+   convention `.node-detail-rules-table tbody tr` + `.node-detail-rule-row--*` above use —
+   reimplemented here on `.node-detail-data-table`'s own row styling instead, so this table stays
+   visually consistent with every other one in this drawer. --- */
+.node-detail-data-table--worker-status tbody tr {
+  border-left: 3px solid token('color.background.neutral.solid.default');
+}
+
+.node-detail-data-table--worker-status tbody tr.node-detail-worker-row--success {
+  border-left-color: token('color.background.success.solid.default');
+}
+
+.node-detail-data-table--worker-status tbody tr.node-detail-worker-row--warning {
+  border-left-color: token('color.background.warning.solid.default');
+}
+
+.node-detail-data-table--worker-status tbody tr.node-detail-worker-row--danger {
+  border-left-color: token('color.background.danger.solid.default');
+}
+
+.node-detail-data-table--worker-status tbody tr.node-detail-worker-row--default {
+  border-left-color: token('color.background.neutral.solid.default');
+}
+
+/* PQ Health is the one status word in this drawer that still keeps its own dedicated text column
+   (unlike the per-worker status table right below it, which uses the row's own left-border color
+   instead) — so unlike that table, the word itself needs a real color here, not just the row
+   border. Same semantic mapping as everywhere else in this app: success/warning/danger foreground
+   tokens, `.default` left at the ambient ink color (no tint) for an unremarkable "Green"/healthy
+   reading. */
+.node-detail-pq-health--success {
+  color: token('color.foreground.success.default');
+  font-weight: 600;
+}
+
+.node-detail-pq-health--warning {
+  color: token('color.foreground.warning.default');
+  font-weight: 600;
+}
+
+.node-detail-pq-health--danger {
+  color: token('color.foreground.danger.default');
+  font-weight: 600;
+}

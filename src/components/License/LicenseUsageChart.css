@@ -1,0 +1,216 @@
+/* `flex: 1; min-height: 0` lets this grow to fill whatever flexible height its own caller's
+   wrapper provides (Overview's own `.ov-panel-body.ov-ingest-body`, `DailyIngestPanel.css`) — the
+   svg below is the one child that actually absorbs that space. */
+.lic-chart-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.sm');
+  flex: 1;
+  min-height: 0;
+}
+
+/* Grows to fill whatever height `.lic-chart-wrap` has left after its controls row (and, in "By
+   Source" mode, the legend below) — `height="100%"` alone isn't enough since this is a flex
+   child, not a block box with a resolvable percentage height on its own. */
+.lic-chart-svg {
+  flex: 1;
+  min-height: 0;
+}
+
+.lic-chart-empty {
+  padding: token('spacing.xl');
+  text-align: center;
+  color: token('color.foreground.subtle');
+  font: token('typography.body.sm.normal');
+}
+
+.lic-chart-axis-label {
+  font-family: token('core.fontFamily.mono');
+  font-size: 10px;
+  fill: token('color.foreground.subtle');
+}
+
+/* An "Unattributed" day's bar (no real per-source breakdown available for it — see the tooltip's
+   own "No per-source breakdown available for this day" note, which carries that distinction now)
+   — accent blue when within the daily quota, matching the same accent border color the Signal
+   Path FINAL tag uses, red when the day's real total exceeded the quota. */
+.lic-bar {
+  fill: token('color.background.accent.solid.default');
+}
+
+.lic-bar--over {
+  fill: token('color.background.danger.solid.default');
+}
+
+.lic-bar--hover {
+  opacity: 0.75;
+}
+
+/* Fixed qualitative palette, deliberately distinct from this app's semantic status colors
+   (danger/warning/success) — see `LicenseUsageChart.tsx`'s own doc comment on why reusing those
+   here would be misleading. Chosen for visual distinctness from each other, not for individual
+   contrast against text (nothing is drawn on top of a swatch — labels live in the legend/tooltip
+   as plain foreground text next to a small color square, the same "swatch, not text-on-fill"
+   pattern already used elsewhere in this app, e.g. `.ov-svt-legend-swatch`). */
+.lic-swatch-0 {
+  fill: #6366f1;
+  background: #6366f1;
+}
+.lic-swatch-1 {
+  fill: #06b6d4;
+  background: #06b6d4;
+}
+.lic-swatch-2 {
+  fill: #a855f7;
+  background: #a855f7;
+}
+.lic-swatch-3 {
+  fill: #ec4899;
+  background: #ec4899;
+}
+.lic-swatch-4 {
+  fill: #f59e0b;
+  background: #f59e0b;
+}
+.lic-swatch-5 {
+  fill: #14b8a6;
+  background: #14b8a6;
+}
+.lic-swatch-6 {
+  fill: #3b82f6;
+  background: #3b82f6;
+}
+.lic-swatch-7 {
+  fill: #d946ef;
+  background: #d946ef;
+}
+.lic-swatch-8 {
+  fill: #f97316;
+  background: #f97316;
+}
+.lic-swatch-9 {
+  fill: #0ea5e9;
+  background: #0ea5e9;
+}
+.lic-swatch-other {
+  fill: token('color.foreground.placeholder');
+  background: token('color.foreground.placeholder');
+}
+
+.lic-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: token('spacing.sm') token('spacing.md');
+  padding-top: token('spacing.xs');
+  border-top: token('border.default');
+}
+
+.lic-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+}
+
+/* The per-Source legend entries are real `<button>`s now (the quota toggle's own label next to
+   them stays a plain `<span>` sharing the same base rule above) — element-qualified so this only
+   resets native button chrome for those, not the span. */
+button.lic-chart-legend-item {
+  border: none;
+  background: none;
+  padding: 2px token('spacing.xs');
+  margin: -2px calc(-1 * token('spacing.xs'));
+  border-radius: token('radius.md');
+  cursor: pointer;
+  transition: background token('motion.duration.short') token('motion.easing.standard');
+}
+
+button.lic-chart-legend-item:hover,
+button.lic-chart-legend-item:focus-visible {
+  background: token('color.background.neutral.subtle');
+  color: token('color.foreground.default');
+}
+
+button.lic-chart-legend-item:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 1px;
+}
+
+/* Every bar/segment that isn't the currently-hovered legend entry's own Source — same "focus
+   on what's hovered, fade the rest" language this app already uses for Signal Path's node/edge
+   highlighting, applied here to the chart's bars instead. Transitioned so the fade reads as a
+   real highlight, not an abrupt flicker. */
+.lic-bar--series-dimmed {
+  opacity: 0.2;
+  transition: opacity token('motion.duration.short') token('motion.easing.standard');
+}
+
+.lic-chart-legend-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ---- hover tooltip, portaled to document.body — see the component's own doc comment for why
+   (a chart this wide routinely sits inside a panel whose overflow clips a plain CSS-absolute
+   child, the same real bug already found and fixed for SourceVolumeRowChart/WorkerAlertBadge). ---- */
+
+.lic-chart-tooltip {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: token('spacing.sm');
+  background: token('color.background.panel.solid');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  box-shadow: token('shadow.medium.down');
+  min-width: 160px;
+  pointer-events: none;
+}
+
+.lic-chart-tooltip-date {
+  font: token('typography.body.xs.semibold');
+  color: token('color.foreground.subtle');
+}
+
+.lic-chart-tooltip-total {
+  font-family: token('core.fontFamily.mono');
+  font: token('typography.body.sm.semibold');
+}
+
+.lic-chart-tooltip-over {
+  font-family: token('core.fontFamily.sans');
+  color: token('color.foreground.danger.default');
+  font-weight: 600;
+}
+
+.lic-chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  font: token('typography.body.xs.normal');
+}
+
+.lic-chart-tooltip-row-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lic-chart-tooltip-row-value {
+  font-family: token('core.fontFamily.mono');
+  font-weight: 600;
+}
+
+.lic-chart-tooltip-note {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.placeholder');
+  max-width: 200px;
+}

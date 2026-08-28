@@ -1,0 +1,88 @@
+.ov-balance-toggle {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: token('spacing.sm') token('spacing.md');
+  border-bottom: token('border.default');
+  flex-shrink: 0;
+}
+
+.ov-balance-toggle button {
+  font: token('typography.body.xs.semibold');
+  padding: 4px 10px;
+  border-radius: token('radius.full');
+  border: token('border.default');
+  background: token('color.background.panel.solid');
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.ov-balance-toggle button:hover {
+  border-color: token('color.border.accent.strong');
+}
+
+.ov-balance-toggle button.active {
+  background: token('color.background.accent.solid.default');
+  border-color: token('color.background.accent.solid.default');
+  color: token('color.foreground.accent.contrast');
+}
+
+/* Compound selector (not just `.ov-balance-chart`) so this reliably beats the shared
+   `.ov-panel-body` rule's own `overflow-y: auto` / block layout regardless of stylesheet load
+   order — the same specificity-tie reasoning documented a few times elsewhere in this app. */
+.ov-panel-body.ov-balance-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: token('spacing.sm');
+  padding: token('spacing.md') token('spacing.md') token('spacing.sm');
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.ov-bcol {
+  flex: 1;
+  min-width: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.ov-bcol-val {
+  font-family: token('core.fontFamily.mono');
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ov-bcol-bar {
+  width: 100%;
+  max-width: 30px;
+  border-radius: token('radius.md') token('radius.md') 0 0;
+  background: token('color.background.accent.solid.default');
+  transition: height 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ov-bcol-bar.outlier {
+  background: token('color.background.danger.solid.default');
+}
+
+.ov-bcol-label {
+  font-family: token('core.fontFamily.mono');
+  font-size: 9.5px;
+  color: token('color.foreground.subtle');
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ov-balance-note {
+  padding: 0 token('spacing.md') token('spacing.sm');
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+  flex-shrink: 0;
+}

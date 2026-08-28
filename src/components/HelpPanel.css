@@ -1,0 +1,377 @@
+/* No longer fighting `.view-body`'s own centering defaults (see the former `HelpPage.css`'s own
+   doc comment for that whole saga) — this content now lives inside a `<Drawer>`, a fresh layout
+   context with no shared base rule to lose a specificity tie against. */
+.help-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xl');
+}
+
+/* Pinned to the top of the Drawer's own scrolling body (`.capra-Drawer-module-*-body`, the actual
+   `overflow: hidden auto` container everything here lives inside — confirmed by reading Capra's
+   own compiled `Drawer` source rather than assumed) so the tab strip stays reachable regardless of
+   how far down a long tab's content the reader has scrolled. A solid background matching that same
+   body's own panel-solid fill is what makes stuck content actually look covered, not just
+   overlapped, as it scrolls underneath. Wraps only the tab strip now — the search box itself moved
+   into the Drawer's own real header (`App.tsx`'s `HelpSearchBox`), per direct request, so no
+   separate padding/border of its own is needed here: `.help-tablist`'s own `border-bottom` (below)
+   already supplies both the visual separation from scrolling content and the tab-underline anchor
+   in one line.
+
+   Real bug, found live (not guessed): that same scroll container has its own 16px top padding
+   (Capra's own default `Drawer` body padding, confirmed via a direct `getComputedStyle` read, not
+   this app's own CSS). A plain `top: 0` sticky element only ever rests flush *after* that padding
+   (confirmed live: its own resting box stayed at the padding-plus-16px offset even while scrolled),
+   never covering the padding band itself — so an earlier paragraph scrolled up into that 16px zone
+   rendered fully visible there, uncovered by anything opaque (the padding is still inside the
+   container's own overflow-clip boundary, not clipped away) — read at a glance as "text passing
+   through the tab bar from below." Fixed with three coordinated values, confirmed live rather than
+   derived from the spec alone (sticky's own interaction with margins/offsets was less predictable
+   in practice than expected): `top: -16px` lets the sticky element's own stuck position reach 16px
+   higher, right up to the scroll container's real padding edge; `margin-top: -16px` +
+   `padding-top: 16px` extends this element's own box to actually fill that reclaimed space with its
+   opaque background, while putting the same 16px back as *internal* spacing so the tab strip's own
+   visual resting position on screen is unchanged — only the box doing the covering got taller and
+   moved. The 16px itself isn't a token read from here (it's Capra's own internal Drawer padding,
+   not one of this app's own values) — if a future `@capra/core` upgrade changes it, the same gap
+   would reappear and need re-measuring, the same fragile-but-documented tradeoff this app already
+   accepts for its other few places that target Capra's own internals directly. */
+.help-sticky-header {
+  position: sticky;
+  top: -16px;
+  z-index: 2;
+  margin-top: -16px;
+  padding-top: 16px;
+  background: token('color.background.panel.solid');
+}
+
+/* Wraps onto a second row at the drawer's own ~560px width rather than scrolling horizontally —
+   "Signal Path" and "Flow Explorer" don't fit a single row alongside the other three tabs at that
+   width, and a wrapped tab strip stays fully visible without needing a scroll affordance. */
+.help-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: token('spacing.xs') token('spacing.lg');
+  border-bottom: token('border.default');
+}
+
+.help-tab {
+  border: none;
+  background: none;
+  padding: token('spacing.sm') 0;
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+  /* Sits on the shared border-bottom above rather than the tablist's own border, so switching tabs
+     never reflows the strip's height. */
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  transition: color token('motion.duration.short') token('motion.easing.standard'),
+    border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.help-tab:hover {
+  color: token('color.foreground.default');
+}
+
+.help-tab:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+.help-tab--active {
+  color: token('color.foreground.accent.default');
+  border-bottom-color: token('color.background.accent.solid.default');
+}
+
+.help-tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.2xl');
+}
+
+.help-tabpanel:focus-visible {
+  outline: none;
+}
+
+/* `scroll-margin-top` is what keeps a search result's own `scrollIntoView()` call from landing a
+   section right underneath the sticky header above instead of just below it — `--help-sticky-
+   offset` is the header's own real, live-measured height (a `ResizeObserver` in HelpPanel.tsx,
+   not a guessed pixel value: the header wraps to a second row below ~560px, so a fixed offset
+   would be wrong at some widths). The transition/radius pair below drive the brief "you've arrived
+   here" flash a selected search result triggers — see `.help-section-highlight`. */
+.help-panel-body section {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.md');
+  scroll-margin-top: calc(var(--help-sticky-offset, 0px) + token('spacing.md'));
+  border-radius: token('radius.md');
+  transition: background-color 1.2s token('motion.easing.standard');
+}
+
+/* The About tab's own real external link (Discovered Intelligence's website) — the one place in
+   this whole panel with a genuine `<a href>` out to the world, so it's the only place this file
+   needs to style one at all. Underline only on hover/focus, not at rest, matching how `<Term>`
+   bolding elsewhere in this file already marks something as notable without a permanent visual
+   weight fighting the surrounding prose. */
+.help-panel-body a {
+  color: token('color.foreground.accent.default');
+  text-decoration: none;
+}
+
+.help-panel-body a:hover,
+.help-panel-body a:focus-visible {
+  text-decoration: underline;
+}
+
+.help-panel-body a:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+/* Added the instant a jumped-to section lands, then removed ~1.2s later (HelpPanel.tsx) — with no
+   `transition` while the class is present, the tint appears immediately; once removed, the plain
+   `.help-panel-body section` rule above (which does transition `background-color`) takes over and
+   fades it back out smoothly. */
+.help-panel-body section.help-section-highlight {
+  background: token('color.background.accent.subtle');
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-panel-body section {
+    transition: none;
+  }
+}
+
+/* Marks exactly where a jumped-to section's own search term(s) appear, alongside (not instead of)
+   the section-wide flash above — the flash says "you've arrived here," this says "specifically,
+   here." Reuses the Final tag's own already-WCAG-confirmed solid-accent pairing
+   (`color.background.accent.solid.default` + `color.foreground.accent.contrast`, see this app's own
+   `NodeCard.css` history) rather than re-deriving a new one — a real `<mark>` element, not a styled
+   `<span>`, so it keeps its own correct semantics/browser find-in-page interplay for free. */
+.help-search-match {
+  background: token('color.background.accent.solid.default');
+  color: token('color.foreground.accent.contrast');
+  border-radius: token('radius.md');
+  padding: 0 2px;
+}
+
+/* `font` explicit here — real bug, found by measuring live computed styles rather than assumed:
+   with nothing setting it, a bare `<li>` (nothing in `TermList` routes its own text through a
+   `Text` component) fell back to the browser's own default `16px`, one size step above every
+   `Text`-rendered paragraph's real `body-md-normal` (`14px`) elsewhere on this same page. Matching
+   that token here is what actually makes list and paragraph text render at the same size, not just
+   look approximately close. */
+.help-panel-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.sm');
+  padding-left: token('spacing.xl');
+  font: token('typography.body.md.normal');
+}
+
+/* A small tracked category label above a section's own `SubHeading` (`Eyebrow` in HelpPanel.tsx) —
+   General tab only. Its own accent color/size comes from `Text`'s own `variant`/`color` props;
+   this wrapper only carries the letter-spacing/uppercase transform Text itself has no prop for. */
+.help-eyebrow {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* A real bordered `<table>` in place of the plain bullet lists used everywhere else in this file —
+   for the two spots (Status colors, the KPI row) where the content genuinely has two distinct
+   columns worth separating, not a blanket replacement of `TermList`. Mirrors the same border/
+   token pattern this app's own real data tables already establish elsewhere (e.g. Overview's
+   Node Inventory table). */
+.help-ref-table-wrap {
+  border: token('border.default');
+  border-radius: token('radius.md');
+  overflow: hidden;
+}
+
+.help-ref-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.help-ref-table th {
+  text-align: left;
+  padding: token('spacing.sm') token('spacing.md');
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+  background: token('color.background.neutral.subtle');
+  border-bottom: token('border.default');
+}
+
+/* `body.md.normal`, not the `body.sm.normal` this originally shipped with — real bug, found the
+   same way as `.help-panel-body ul` above: measured live at `12px` against every real paragraph's
+   `14px` elsewhere on this page. Header cells (`th`, below) staying smaller and uppercase is a
+   deliberate, different tier — the same small-caption treatment this app's own real data tables
+   already establish for table headers specifically, not an oversight to match up with body text. */
+.help-ref-table td {
+  padding: token('spacing.sm') token('spacing.md');
+  font: token('typography.body.md.normal');
+  color: token('color.foreground.default');
+  border-bottom: token('border.default');
+  vertical-align: top;
+}
+
+.help-ref-table tr:last-child td {
+  border-bottom: none;
+}
+
+.help-ref-table-pill-cell {
+  white-space: nowrap;
+}
+
+/* Fixed width for every status Pill in this table, applied to the Pill's own rendered box via its
+   real `FORCE__className` prop (Capra's own sanctioned customization hook — not a bare `className`
+   on the component, and not a selector reaching into its internal class names either). Real bug,
+   reported directly: `Pill`'s own base CSS is `width: fit-content`, so "Healthy"/"Degraded"/
+   "Blocked"/"No data" each rendered at their own different natural width. `justify-content: center`
+   means the extra room a shorter label doesn't need becomes blank space split evenly inside the
+   pill itself, on both sides of the text, rather than shifting the label off-center within a fixed
+   box. 92px was measured live as the widest of the four ("Degraded", icon + text + padding) with a
+   little headroom, not guessed. */
+.help-status-pill {
+  width: 92px;
+  justify-content: center;
+}
+
+/* Free-text search across every tab at once, not just the active one — see HelpPanel.tsx's own
+   top-level doc comment. Visual language borrowed directly from Flow Explorer's own established
+   search-box pattern (`.flow-explorer-search`) for consistency, not a new one invented here. */
+/* Lives in the Drawer's own real header row now (`App.tsx`'s `HelpSearchBox`, next to `.side-panel-
+   header-row`'s title and pin/close icons), not inside this file's own scrolling body. Deliberately
+   narrower than the full room that row leaves between the fixed-width title and icons (a plain
+   `flex: 1` box used to fill it edge to edge) — a fixed `280px` basis with no grow, `margin: 0 auto`
+   centering it within whatever space the title/icons leave on either side. Safe as a fixed (not
+   responsive) width since this drawer's own width is itself fixed at 560px (`App.tsx`), never
+   resized. */
+.help-search {
+  position: relative;
+  flex: 0 0 280px;
+  margin: 0 auto;
+}
+
+.help-search-field {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  height: token('dimension.component.sm');
+  padding: 0 token('spacing.sm');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  color: token('color.foreground.placeholder');
+  transition: border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.help-search-field:focus-within {
+  border-color: token('color.border.accent.strong');
+}
+
+.help-search-field svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.help-search-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: token('typography.body.sm.normal');
+  color: token('color.foreground.default');
+}
+
+.help-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: token('radius.full');
+  background: transparent;
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.help-search-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+.help-search-clear:hover {
+  background: token('color.background.neutral.hover');
+  color: token('color.foreground.default');
+}
+
+.help-search-clear:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 1px;
+}
+
+/* A floating dropdown, not an inline list that would reflow the tab strip below it as the reader
+   types — `position: absolute` relative to `.help-search` above, so it overlays whatever's already
+   on screen instead of pushing it down. */
+.help-search-results {
+  position: absolute;
+  top: calc(100% + token('spacing.xs'));
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+  padding: token('spacing.xs');
+  background: token('color.background.panel.solid');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  box-shadow: token('shadow.medium.down');
+  z-index: 3;
+}
+
+.help-search-empty {
+  padding: token('spacing.sm') token('spacing.md');
+}
+
+.help-search-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: token('spacing.xs');
+  padding: token('spacing.sm') token('spacing.md');
+  border: none;
+  border-radius: token('radius.md');
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.help-search-result:hover {
+  background: token('color.background.neutral.hover');
+}
+
+.help-search-result:focus-visible {
+  outline: token('border.focus');
+  outline-offset: -2px;
+}
+
+.help-search-result-heading {
+  display: flex;
+  align-items: baseline;
+  gap: token('spacing.sm');
+}
+

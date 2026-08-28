@@ -1,0 +1,313 @@
+.trend-chart {
+  position: relative;
+  width: 100%;
+}
+
+.trend-chart--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: token('color.foreground.placeholder');
+  font: token('typography.body.sm.normal');
+  border: 1px dashed token('color.border.neutral.subtle');
+  border-radius: token('radius.lg');
+}
+
+.trend-chart-gridline {
+  stroke: token('color.border.neutral.subtle');
+  stroke-width: 1;
+}
+
+.trend-chart-axis-label {
+  fill: token('color.foreground.placeholder');
+  font-size: 10px;
+  font-family: token('core.fontFamily.mono');
+}
+
+.trend-chart-area {
+  fill: token('color.background.accent.default');
+  /* Lower than a single-series fill would want on its own — every drawer trend chart can carry
+     more than one series (the per-Source split), and their areas overlap directly on the same
+     baseline, so a lighter translucency keeps two or three stacked fills legible instead of
+     muddying into one solid block. */
+  opacity: 0.22;
+  stroke: none;
+  transition: opacity token('motion.duration.short') token('motion.easing.standard');
+}
+
+.trend-chart-line {
+  fill: none;
+  stroke: token('color.foreground.accent.default');
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.trend-chart-crosshair {
+  stroke: token('color.foreground.subtle');
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.trend-chart-dot {
+  fill: token('color.foreground.accent.default');
+  stroke: token('color.background.panel.solid');
+  stroke-width: 1.5;
+}
+
+.trend-chart-tooltip {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  padding: token('spacing.xs') token('spacing.sm');
+  border-radius: token('radius.md');
+  background: token('color.background.neutral.solid.default');
+  color: token('color.foreground.neutral.contrast');
+  font-size: 11px;
+  line-height: 1.3;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.trend-chart-tooltip-value {
+  font-weight: 700;
+}
+
+.trend-chart-tooltip-time {
+  opacity: 0.85;
+}
+
+/* Multi-series only (the split-by-Source case) — a row per series inside the shared tooltip, and
+   a small legend below the chart. */
+.trend-chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  width: 100%;
+}
+
+.trend-chart-tooltip-label {
+  flex: 1;
+  text-align: left;
+}
+
+.trend-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: token('spacing.sm') token('spacing.md');
+  margin-top: token('spacing.xs');
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+}
+
+/* Centers the legend instead of the base rule's own left alignment — used by the drawer/node-card
+   trend charts, which always show every series split out with its own entry (even a lone one). */
+.trend-chart-legend--centered {
+  justify-content: center;
+}
+
+.trend-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+}
+
+/* Legend entries as real `<button>`s (hover *and* focus both highlight, for keyboard parity with
+   mouse hover) — resets native button chrome back to the plain inline-flex label
+   `.trend-chart-legend-item` already looks like as a bare `<span>`. */
+.trend-chart-legend-item--interactive {
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: token('radius.md');
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.trend-chart-legend-item--interactive:hover,
+.trend-chart-legend-item--interactive:focus-visible {
+  background: token('color.background.neutral.subtle');
+  color: token('color.foreground.default');
+}
+
+.trend-chart-legend-item--interactive:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 1px;
+}
+
+/* A non-hovered series' own line/dot, once some *other* legend entry is hovered/focused. */
+.trend-chart-item-dimmed {
+  opacity: 0.25;
+  transition: opacity token('motion.duration.short') token('motion.easing.standard');
+}
+
+/* The area fill starts far more translucent than a line/dot ever does (`.trend-chart-area`'s own
+   base opacity is already only 0.22, below), so reusing the same flat 0.25 a line dims *to* would
+   barely read as dimmed at all. Qualified with `.trend-chart-area` so this wins over that base
+   rule on real specificity, not source order. */
+.trend-chart-area.trend-chart-item-dimmed {
+  opacity: 0.05;
+}
+
+/* The specifically-hovered series' own line gets a touch heavier, on top of its already-full
+   opacity, so it reads as the one thing being pointed at rather than merely "not dimmed." */
+.trend-chart-item-emphasized {
+  stroke-width: 3;
+}
+
+/* Same idea for the area fill underneath the emphasized line — a touch richer than its own
+   already-translucent resting state. */
+.trend-chart-area.trend-chart-item-emphasized {
+  opacity: 0.36;
+}
+
+.trend-chart-legend-swatch,
+.trend-chart-tooltip-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: token('radius.full');
+  flex: none;
+}
+
+/* Fixed qualitative palette, deliberately distinct from this app's semantic status colors
+   (danger/warning/success) — a series here means "which Source," not a health signal. Mirrors
+   the Daily Ingest chart's own qualitative palette (`.lic-swatch-N`, `LicenseUsageChart.css`)
+   exactly, so a "which category" color language stays consistent app-wide instead of a second,
+   unrelated one.
+   Qualified with `.trend-chart-line` — a bare `.trend-chart-series-N` has the exact same (0,1,0)
+   specificity as the base `.trend-chart-line` rule above, which would otherwise win or lose
+   purely on source order (the same specificity pitfall this project has hit and documented
+   several times before), not on which class was actually meant to take precedence. */
+.trend-chart-line.trend-chart-series-0 {
+  stroke: #6366f1;
+}
+.trend-chart-line.trend-chart-series-1 {
+  stroke: #06b6d4;
+}
+.trend-chart-line.trend-chart-series-2 {
+  stroke: #a855f7;
+}
+.trend-chart-line.trend-chart-series-3 {
+  stroke: #ec4899;
+}
+.trend-chart-line.trend-chart-series-4 {
+  stroke: #f59e0b;
+}
+.trend-chart-line.trend-chart-series-5 {
+  stroke: #14b8a6;
+}
+.trend-chart-line.trend-chart-series-6 {
+  stroke: #3b82f6;
+}
+.trend-chart-line.trend-chart-series-7 {
+  stroke: #d946ef;
+}
+.trend-chart-line.trend-chart-series-8 {
+  stroke: #f97316;
+}
+.trend-chart-line.trend-chart-series-9 {
+  stroke: #0ea5e9;
+}
+
+/* Same per-series palette as the lines above, applied to each series' own area fill underneath
+   it — qualified with `.trend-chart-area` for the same reason the line rules above are (a bare
+   `.trend-chart-series-N` would tie on specificity with the base `.trend-chart-area` rule and win
+   or lose purely on source order). */
+.trend-chart-area.trend-chart-series-0 {
+  fill: #6366f1;
+}
+.trend-chart-area.trend-chart-series-1 {
+  fill: #06b6d4;
+}
+.trend-chart-area.trend-chart-series-2 {
+  fill: #a855f7;
+}
+.trend-chart-area.trend-chart-series-3 {
+  fill: #ec4899;
+}
+.trend-chart-area.trend-chart-series-4 {
+  fill: #f59e0b;
+}
+.trend-chart-area.trend-chart-series-5 {
+  fill: #14b8a6;
+}
+.trend-chart-area.trend-chart-series-6 {
+  fill: #3b82f6;
+}
+.trend-chart-area.trend-chart-series-7 {
+  fill: #d946ef;
+}
+.trend-chart-area.trend-chart-series-8 {
+  fill: #f97316;
+}
+.trend-chart-area.trend-chart-series-9 {
+  fill: #0ea5e9;
+}
+
+.trend-chart-legend-swatch.trend-chart-series-0,
+.trend-chart-tooltip-swatch.trend-chart-series-0,
+.trend-chart-dot.trend-chart-series-0 {
+  background: #6366f1;
+  fill: #6366f1;
+}
+.trend-chart-legend-swatch.trend-chart-series-1,
+.trend-chart-tooltip-swatch.trend-chart-series-1,
+.trend-chart-dot.trend-chart-series-1 {
+  background: #06b6d4;
+  fill: #06b6d4;
+}
+.trend-chart-legend-swatch.trend-chart-series-2,
+.trend-chart-tooltip-swatch.trend-chart-series-2,
+.trend-chart-dot.trend-chart-series-2 {
+  background: #a855f7;
+  fill: #a855f7;
+}
+.trend-chart-legend-swatch.trend-chart-series-3,
+.trend-chart-tooltip-swatch.trend-chart-series-3,
+.trend-chart-dot.trend-chart-series-3 {
+  background: #ec4899;
+  fill: #ec4899;
+}
+.trend-chart-legend-swatch.trend-chart-series-4,
+.trend-chart-tooltip-swatch.trend-chart-series-4,
+.trend-chart-dot.trend-chart-series-4 {
+  background: #f59e0b;
+  fill: #f59e0b;
+}
+.trend-chart-legend-swatch.trend-chart-series-5,
+.trend-chart-tooltip-swatch.trend-chart-series-5,
+.trend-chart-dot.trend-chart-series-5 {
+  background: #14b8a6;
+  fill: #14b8a6;
+}
+.trend-chart-legend-swatch.trend-chart-series-6,
+.trend-chart-tooltip-swatch.trend-chart-series-6,
+.trend-chart-dot.trend-chart-series-6 {
+  background: #3b82f6;
+  fill: #3b82f6;
+}
+.trend-chart-legend-swatch.trend-chart-series-7,
+.trend-chart-tooltip-swatch.trend-chart-series-7,
+.trend-chart-dot.trend-chart-series-7 {
+  background: #d946ef;
+  fill: #d946ef;
+}
+.trend-chart-legend-swatch.trend-chart-series-8,
+.trend-chart-tooltip-swatch.trend-chart-series-8,
+.trend-chart-dot.trend-chart-series-8 {
+  background: #f97316;
+  fill: #f97316;
+}
+.trend-chart-legend-swatch.trend-chart-series-9,
+.trend-chart-tooltip-swatch.trend-chart-series-9,
+.trend-chart-dot.trend-chart-series-9 {
+  background: #0ea5e9;
+  fill: #0ea5e9;
+}

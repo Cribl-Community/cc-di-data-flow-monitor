@@ -1,0 +1,18 @@
+/* `position: fixed` + `right` (not `left`, since the drawer is right-anchored and its width can
+   change) keeps it flush against the sheet's own left edge regardless of current width; `z-index`
+   has to clear the Drawer's own root (1000, confirmed in `@capra/core`'s bundled CSS) to stay
+   clickable on top of it. */
+.drawer-resize-handle {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  z-index: 1001;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.drawer-resize-handle:hover,
+.drawer-resize-handle:active {
+  background: token('color.border.accent.strong');
+}

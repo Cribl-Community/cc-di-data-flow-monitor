@@ -1,0 +1,103 @@
+/* Wraps the info icon and the status rectangle together so the pair moves as one unit, pinned to
+   the far right of whatever row it's a flex child of (`.control-bar`, `PageHeader.tsx`) — the
+   `margin-left: auto` that used to live on `.commit-deploy-tag` itself now lives here, one level
+   up, so the icon sits immediately to its left rather than being pushed further right on its own. */
+.commit-deploy-group {
+  display: inline-flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  margin-left: auto;
+}
+
+/* A plain circular "i" affordance — same `radius.full` shape already proven for this exact
+   "hover for an explanation" pattern elsewhere in this app (`.ov-info-icon`), sized to match the
+   full height of the button beside it: `dimension.component.md` (the height every top-bar
+   control, including `.commit-deploy-tag`, shares) is 32px. The glyph keeps the same ~0.81 ratio
+   to its own hit area the smaller 16px/13px version used, so it doesn't look oversized inside the
+   bigger box. */
+.commit-deploy-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: token('radius.full');
+  background: none;
+  padding: 0;
+  color: token('color.foreground.placeholder');
+  cursor: help;
+}
+
+.commit-deploy-info svg {
+  width: 26px;
+  height: 26px;
+}
+
+.commit-deploy-info:hover,
+.commit-deploy-info:focus-visible {
+  color: token('color.foreground.subtle');
+}
+
+.commit-deploy-info:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 1px;
+}
+
+/* Same sharp-cornered-rectangle-with-a-real-border-and-fill language as the Route rules' own
+   "Final" tag (`NodeCard.css`'s `.route-rule-final`) — just success/danger instead of accent,
+   since this is a real pending-vs-clean signal, not a rule flag. Height matches every other
+   top-bar control (`dimension.component.md`, same as `.pill-select`/`.segmented`) rather than the
+   Final tag's own smaller, table-row-scaled size. The redirect icon lives *inside* this same box
+   (see `.commit-deploy-redirect` below), not beside it. */
+.commit-deploy-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  height: token('dimension.component.md');
+  padding: 0 token('spacing.xs') 0 token('spacing.md');
+  border-radius: 0;
+}
+
+/* Plain `title`-attribute hover text, not a Capra `Tooltip` — per explicit direction this reads as
+   display only, not a button, so there's no pointer cursor, no hover/focus/pressed state, and
+   nothing added to the tab order. The redirect `IconButton` next to it is the one genuinely
+   interactive part of this box. */
+.commit-deploy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  font: token('typography.body.sm.semibold');
+  white-space: nowrap;
+  cursor: default;
+}
+
+.commit-deploy-label svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Subtle background + solid border + `.default` foreground text — the same pairing already proven
+   accessible at small sizes elsewhere in this app (the Final tag, `WorkerAlertBadge`), reused here
+   with the success/danger ramps instead of accent. Applied to the outer box so the redirect icon
+   sits on the same tinted fill as the label. */
+.commit-deploy-tag--ok {
+  border: 1px solid token('color.background.success.solid.default');
+  background: token('color.background.success.subtle');
+  color: token('color.foreground.success.default');
+}
+
+.commit-deploy-tag--pending {
+  border: 1px solid token('color.background.danger.solid.default');
+  background: token('color.background.danger.subtle');
+  color: token('color.foreground.danger.default');
+}
+
+/* Neutral, not tinted to match the box's own success/danger fill — reads as a plain, ordinary
+   redirect affordance (matching the Signal Path card's own "open in Cribl" icon exactly) rather
+   than a second status signal competing with the label beside it. */
+.commit-deploy-redirect {
+  color: token('color.foreground.subtle');
+}

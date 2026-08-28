@@ -1,0 +1,76 @@
+.function-error-hover {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Base rule deliberately sets `color: inherit` at plain-class (0,1,0) specificity — a real caller
+   (`button.node-card-err-badge`, `NodeCard.css`) paints its own danger-red text on top of this at
+   element+class (0,1,1) specificity, which must win regardless of source order. Otherwise
+   unstyled: sizing/appearance come entirely from whatever the caller's own `className` supplies. */
+.function-error-trigger {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.function-error-trigger:focus-visible {
+  outline: 2px solid token('color.border.accent.strong');
+  outline-offset: 2px;
+}
+
+/* `position: fixed`, not `absolute` — portaled straight to `document.body` so a scroll container
+   elsewhere in the app can't clip it. `top`/`left` are set inline from the trigger's own measured
+   `getBoundingClientRect()`, not by this stylesheet. */
+.function-error-panel {
+  position: fixed;
+  z-index: 100;
+  min-width: 220px;
+  max-width: 360px;
+  padding: token('spacing.sm');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  box-shadow: token('shadow.medium.down');
+}
+
+.function-error-empty {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+}
+
+.function-error-list {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.function-error-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.function-error-time {
+  font-family: token('core.fontFamily.mono');
+  font-size: 11px;
+  color: token('color.foreground.subtle');
+}
+
+.function-error-message {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.default');
+  word-break: break-word;
+}
+
+.function-error-more {
+  margin-top: token('spacing.xs');
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.subtle');
+}

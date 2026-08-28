@@ -1,0 +1,51 @@
+.signal-path-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.signal-path-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The node-detail drawer's own custom header (title + component-type subtitle + pin/close icons),
+   mirroring `App.tsx`'s own Settings/Help drawer header — a separate, local copy rather than a
+   shared class, since that header lives in `App.css`. */
+.signal-path-drawer-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.md');
+  width: 100%;
+}
+
+.signal-path-drawer-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.signal-path-drawer-header-subtitle {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.signal-path-drawer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  flex-shrink: 0;
+}
+
+/* Pinned = actively suspending the drawer's own click-outside-to-close — same accent-tinted "on"
+   treatment already used for other toggled/selected controls in this app. */
+.signal-path-drawer-pin-btn--active {
+  color: token('color.foreground.accent.default');
+  background: token('color.background.accent.subtle');
+  border-radius: token('radius.md');
+}
+

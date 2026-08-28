@@ -1,0 +1,215 @@
+.ov-roster-search {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  height: token('dimension.component.sm');
+  padding: 0 token('spacing.sm');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  color: token('color.foreground.placeholder');
+  width: 220px;
+}
+
+.ov-roster-search svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.ov-roster-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: token('typography.body.sm.normal');
+  color: token('color.foreground.default');
+}
+
+.ov-roster-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: token('radius.full');
+  background: transparent;
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.ov-roster-search-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ov-roster-search-clear:hover {
+  background: token('color.background.neutral.hover');
+  color: token('color.foreground.default');
+}
+
+.ov-roster-search-clear:focus-visible {
+  outline: 2px solid token('color.border.accent.strong');
+  outline-offset: 1px;
+}
+
+.ov-roster-scroll {
+  overflow: auto;
+}
+
+.ov-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ov-roster-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: token('color.background.neutral.subtle');
+  padding: 0;
+  border-bottom: token('border.default');
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ov-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  width: 100%;
+  padding: token('spacing.sm') token('spacing.md');
+  border: none;
+  background: none;
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.ov-sort-btn:hover {
+  color: token('color.foreground.default');
+}
+
+.ov-sort-indicator {
+  font-size: 9px;
+}
+
+/* A shared "plain header label" utility — also reused as-is by `AlertFeedPanel.tsx`'s own table,
+   matching this app's own established convention of a few genuinely cross-component utility
+   classes living in one file rather than being redefined per consumer (see `.ov-mono` below).
+   Deliberately doubled (`.ov-th-plain.ov-th-plain`, specificity 0,2,0) rather than a single class
+   (0,1,0): any table's own base `th` rule — this file's `.ov-roster-table th` included — is an
+   element+class selector (0,1,1), which would otherwise silently outrank a plain single-class
+   rule regardless of source order. That's exactly what happened before this was doubled: every
+   "plain" header cell (Worker Group/Fleet, Processes, Status) rendered at the base rule's own
+   `padding: 0` instead of this rule's real padding, so the label sat flush against the cell's left
+   edge while the data cell below it kept its own real padding — a real, visible horizontal
+   misalignment between a plain header and its own column's values, caught live via a computed-
+   style check, not by eye (the offset reads as subtle at this row height). The sortable headers
+   (CPU, Mem, etc.) never had this problem: their own padding lives on the `.ov-sort-btn` *inside*
+   the `<th>`, not on the `<th>` itself, so nothing there ever competed with the base rule. */
+.ov-th-plain.ov-th-plain {
+  padding: token('spacing.sm') token('spacing.md');
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+}
+
+.ov-roster-table td {
+  padding: token('spacing.sm') token('spacing.md');
+  border-bottom: token('border.default');
+  vertical-align: middle;
+  font: token('typography.body.sm.normal');
+}
+
+.ov-roster-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ov-roster-table tr:hover td {
+  background: token('color.background.neutral.subtle');
+}
+
+.ov-roster-row {
+  cursor: pointer;
+}
+
+.ov-roster-row:focus-visible {
+  outline: 2px solid token('color.border.accent.strong');
+  outline-offset: -2px;
+}
+
+.ov-mono {
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-roster-group {
+  color: token('color.foreground.subtle');
+}
+
+.ov-roster-status {
+  color: token('color.foreground.subtle');
+  font-weight: 600;
+}
+
+/* Colored by the same real per-worker verdict (`deriveWorkerHealth`) this table's own default
+   sort already uses — never a second, independent mapping of the raw Cribl string, so this can't
+   drift out of sync with the sort order or the KPI row's own count. `--default` (nodata/"Idle")
+   intentionally keeps the plain base rule's own subtle gray above — no dedicated modifier needed,
+   same reasoning every other status label in this app already follows for its own neutral case. */
+.ov-roster-status--success {
+  color: token('color.foreground.success.default');
+}
+.ov-roster-status--warning {
+  color: token('color.foreground.warning.default');
+}
+.ov-roster-status--danger {
+  color: token('color.foreground.danger.default');
+}
+
+.ov-roster-na {
+  color: token('color.foreground.placeholder');
+  font-family: token('core.fontFamily.mono');
+}
+
+.ov-mini-bar-cell {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+}
+
+.ov-mini-bar-track {
+  width: 48px;
+  height: 5px;
+  border-radius: 3px;
+  background: token('color.background.neutral.subtle');
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ov-mini-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.ov-mini-bar-fill--ok { background: token('color.background.accent.solid.default'); }
+.ov-mini-bar-fill--warn { background: token('color.background.warning.solid.default'); }
+.ov-mini-bar-fill--danger { background: token('color.background.danger.solid.default'); }
+
+.ov-roster-blocked {
+  color: token('color.foreground.danger.default');
+  font-weight: 700;
+}
+
+.ov-roster-empty-row td {
+  padding: token('spacing.2xl');
+  text-align: center;
+}

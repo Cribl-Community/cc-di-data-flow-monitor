@@ -1,0 +1,26 @@
+/* A sortable table needs to read as a normal top-anchored document, not a single box centered in
+   the page, and needs `flex-direction: column` set explicitly since `.view-body`'s own base rule
+   never declares it at all (defaults to flex's own `row`).
+   `min-height: 0` is what lets `.flow-explorer-scroll` below become the actual bounded, internally
+   -scrolling element instead of the whole page scrolling past a sticky header that never sticks.
+   `padding` is `spacing.xl` specifically to match Signal Path's own top-bar-to-content gap —
+   Signal Path's own body div skips `.view-body` entirely (no page-level padding at all) and gets
+   its ~24px gap from `.flow-canvas`'s own `spacing.xl` padding instead, confirmed live via direct
+   measurement (`.control-bar` bottom to the content container's top) rather than assumed from
+   reading the token scale alone. */
+.flow-explorer-body.view-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: token('spacing.md');
+  padding: token('spacing.xl');
+  min-height: 0;
+}
+
+.flow-explorer-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

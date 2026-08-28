@@ -1,0 +1,77 @@
+/* A real `<table>` — same shape and header treatment as `FleetRoster.css`'s own `.ov-roster-table`
+   (sticky, `neutral.subtle` background, uppercase/tracked/subtle labels via the shared, already-
+   globally-defined `.ov-th-plain` class), by explicit direction to match Node Inventory's own
+   format and header color. Deliberately doesn't zero out `<th>` padding the way `.ov-roster-table`
+   does — every column here is a plain label with no sort button living inside it (Alert Feed isn't
+   sortable), so there's no button-padding to protect against doubling up with the `<th>`'s own,
+   and `.ov-th-plain`'s own padding can just apply directly with nothing to fight it over. */
+.ov-alert-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ov-alert-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: token('color.background.neutral.subtle');
+  border-bottom: token('border.default');
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ov-alert-table td {
+  padding: token('spacing.sm') token('spacing.md');
+  border-bottom: token('border.default');
+  vertical-align: middle;
+  font: token('typography.body.sm.normal');
+}
+
+.ov-alert-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ov-alert-table tr:hover td {
+  background: token('color.background.neutral.subtle');
+}
+
+/* Which real Worker Group/Fleet this row's own alert belongs to, plus the row's own severity
+   stripe — a `<tr>` can't carry a visible left border under `border-collapse: collapse` (borders
+   are a per-cell concept in table rendering, not per-row), so it lives on this, the first `<td>`
+   in the row, the same visual effect a row-level border would have had. Fixed width so every row's
+   own second column starts at the same x position regardless of how long the group name is; a
+   genuinely long name truncates with an ellipsis (the full name is still available via the native
+   `title` tooltip) rather than pushing the row's real content off to the side. */
+.ov-alert-group-cell {
+  width: 130px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: token('color.foreground.subtle');
+  border-left: 3px solid token('color.background.neutral.solid.default');
+}
+
+/* Qualified past the plain single-class modifier (`.ov-alert-group-cell.ov-alert-group-cell--
+   warning`, not just `.ov-alert-group-cell--warning`) — both classes land on the same element at
+   equal (0,1,0) specificity otherwise, which resolves purely by source order rather than which one
+   was actually meant to win; the same specificity-tie pitfall this app has hit and documented
+   several times before (Route rule rows, this panel's own prior row-based design). */
+.ov-alert-group-cell.ov-alert-group-cell--warning {
+  border-left-color: token('color.background.warning.solid.default');
+}
+
+.ov-alert-group-cell.ov-alert-group-cell--danger {
+  border-left-color: token('color.background.danger.solid.default');
+}
+
+.ov-alert-detail {
+  color: token('color.foreground.subtle');
+}
+
+.ov-alert-empty {
+  padding: token('spacing.lg');
+  text-align: center;
+  color: token('color.foreground.subtle');
+  font: token('typography.body.sm.normal');
+}

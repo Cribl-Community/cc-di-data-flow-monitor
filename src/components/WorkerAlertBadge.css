@@ -1,0 +1,216 @@
+.worker-alert {
+  position: relative;
+  display: inline-flex;
+}
+
+/* 24x24 *hit area* matches the redirect `IconButton` (`size="sm"`) this sits beside on `NodeCard`
+   exactly (confirmed live: both wrapper boxes measure 24x24) — kept at 24x24 rather than shrunk to
+   match WCAG 2.5.8's 24x24 CSS-pixel minimum target size, the same reason the redirect icon's own
+   button box is 24x24 despite its visible glyph being smaller. No border/background of its own —
+   see `.worker-alert-badge-chip` below for the part that's actually painted. */
+.worker-alert-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* The part that's actually visible — a red square with rounded corners, not a pill/circle,
+   deliberately distinct from any round status dot/border it appears alongside, so "a specific
+   worker is really blocked" reads as a different kind of signal than a component's own
+   (volume-based) health.
+
+   16x16, matching the redirect icon's own *visible* 16px glyph exactly (confirmed live) — the
+   previous version painted its border/background across the entire 24x24 hit area, which read as
+   noticeably heavier/bigger than the redirect icon next to it despite an identical outer box,
+   since that icon paints nothing outside its own 16px glyph. Same subtle-background + solid-border
+   + `.default`-foreground-text pattern as before (not the earlier solid-fill version, which only
+   cleared WCAG's *large-text* 3:1 floor, confirmed elsewhere in this app to fail the 4.5:1
+   normal-text floor below ~19px) — re-measured live at this smaller size: still comfortably
+   compliant (`.default` foreground tokens are built for exactly this, text on a plain/subtle
+   background, regardless of size). */
+.worker-alert-badge-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid token('color.background.danger.solid.default');
+  border-radius: token('radius.md');
+  background: token('color.background.danger.subtle');
+  color: token('color.foreground.danger.default');
+  font-family: token('core.fontFamily.mono');
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.worker-alert-badge:focus-visible {
+  outline: 2px solid token('color.border.accent.strong');
+  outline-offset: 2px;
+}
+
+/* `position: fixed`, not `absolute` — this is portaled straight to `document.body` (see
+   WorkerAlertBadge.tsx for why: a scroll container elsewhere in the app could otherwise clip an
+   absolutely-positioned child anchored inside it). `top`/`left` are set inline from the trigger's
+   own measured `getBoundingClientRect()`, not by this stylesheet.
+
+   A real panel.solid background + border + shadow of its own — a plain, unstyled scaffold (tried
+   first) read as blending into whatever was behind it, effectively invisible outside its own two
+   inner bubbles' own edges. `min-width` gives the summary bubble below a real floor to stretch to
+   even when the table happens to be narrow (few workers, short detail text); in the common case
+   the table (nowrap cells) is the wider of the two and naturally sets the panel's own width, which
+   `.worker-alert-summary`'s own `width: 100%` then matches exactly. */
+.worker-alert-panel {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.sm');
+  min-width: 320px;
+  padding: token('spacing.sm');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  background: token('color.background.panel.solid');
+  box-shadow: token('shadow.medium.down');
+  white-space: nowrap;
+}
+
+/* The plain-language cause, in its own rounded bubble ahead of the technical per-worker table
+   below it — the fast answer to "why," with the raw data still one glance further down for anyone
+   who wants it. `width: 100%` (not a capped `max-width`) so it spans the same width as the table
+   bubble below it rather than reading as a narrower, oddly-shrunk box above a wider one. Color is
+   set entirely by the `--danger`/`--warning` modifier below, matching whichever real status this
+   badge is currently reporting — the same status-driven coloring the drawer's own `.node-detail-why-box`
+   uses, so the same signal reads identically, and in the same color, in both places. */
+.worker-alert-summary {
+  width: 100%;
+  white-space: normal;
+  padding: token('spacing.sm') token('spacing.md');
+  border-radius: token('radius.lg');
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.default');
+}
+
+.worker-alert-summary-label {
+  display: block;
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: token('spacing.xs');
+}
+
+.worker-alert-summary p {
+  margin: 0;
+}
+
+.worker-alert-summary--danger {
+  background: token('color.background.danger.subtle');
+}
+
+.worker-alert-summary--danger .worker-alert-summary-label {
+  color: token('color.foreground.danger.default');
+}
+
+.worker-alert-summary--warning {
+  background: token('color.background.warning.subtle');
+}
+
+.worker-alert-summary--warning .worker-alert-summary-label {
+  color: token('color.foreground.warning.default');
+}
+
+/* The table's own rounded bubble — a bordered, clipped card (`overflow: hidden` so the header's
+   own background and every row's bottom border stay inside the rounded corners) rather than a bare
+   table floating on the panel's own background. */
+.worker-alert-table-wrap {
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  overflow: hidden;
+  background: token('color.background.panel.solid');
+}
+
+.worker-alert-table {
+  border-collapse: collapse;
+  font: token('typography.body.xs.normal');
+}
+
+.worker-alert-table th,
+.worker-alert-table td {
+  text-align: left;
+  padding: token('spacing.xs') token('spacing.sm');
+}
+
+/* Matches Overview's own table header treatment (`FleetRoster.css`'s `.ov-roster-table th`/
+   `.ov-th-plain`) — a tinted header band with small, uppercase, tracked labels — rather than a
+   bare, unstyled header row. */
+.worker-alert-table th {
+  background: token('color.background.neutral.subtle');
+  border-bottom: token('border.default');
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+}
+
+.worker-alert-table tbody tr:not(:last-child) td {
+  border-bottom: token('border.default');
+}
+
+.worker-alert-table tbody tr:hover td {
+  background: token('color.background.neutral.subtle');
+}
+
+/* The Detail cell's own two-line error content needs real wrapping — overrides the outer panel's
+   own `white-space: nowrap` (`.worker-alert-panel`, above), which exists so the rest of the table
+   (hostnames, buffered figures) stays compact, not so a real error message gets force-fit onto one
+   line. Capped `max-width` keeps a long underlying error string (host:port, a stack-ish detail)
+   from stretching the whole floating panel to an unreasonable width — it wraps within this instead. */
+.worker-alert-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+  white-space: normal;
+}
+
+.worker-alert-detail-message {
+  color: token('color.foreground.default');
+}
+
+/* The real underlying failure text (e.g. "connect ECONNREFUSED 127.0.0.1:9997") — a level more
+   technical than the message above it, so it's set in the same monospace/muted treatment this app
+   already uses for other raw/technical detail text (e.g. `.node-detail-function-filter-cell`). */
+.worker-alert-detail-underlying {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.subtle');
+  font-size: 11px;
+}
+
+/* Same per-row left-border status convention as the Signal Path drawer's own per-worker table
+   (`NodeDetailPanel.css`'s `.node-detail-rules-table tbody tr`) — one visual language for "this
+   worker's own status" wherever it appears in the app. */
+.worker-alert-row {
+  border-left: 3px solid token('color.background.neutral.solid.default');
+}
+
+.worker-alert-row--success {
+  border-left-color: token('color.background.success.solid.default');
+}
+
+.worker-alert-row--warning {
+  border-left-color: token('color.background.warning.solid.default');
+}
+
+.worker-alert-row--danger {
+  border-left-color: token('color.background.danger.solid.default');
+}
+
+.worker-alert-row--default {
+  border-left-color: token('color.background.neutral.solid.default');
+}

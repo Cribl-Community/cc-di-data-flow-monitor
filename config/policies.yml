@@ -1,0 +1,90 @@
+# Product API access declaration. Declare Cribl product API paths your app needs to access.
+# At install time, admins see exactly which platform resources the app will use.
+#
+# Kept in sync with the API calls actually made in src/api/* — expand this only alongside new
+# calls in code, never speculatively. App-scoped paths (kvstore, proxy) are granted automatically
+# and are not declared here. See CLAUDE.md's "Cribl REST API surface" section for details,
+# including which paths were confirmed live against the test org and which required the /m/:gid
+# prefix (all of the topology/status/capture ones did; /system/metrics/* did not).
+
+policies:
+  # api/groups.ts — listWorkerGroups()
+  - object: '/master/groups'
+    actions: ['GET']
+
+  # api/topology.ts — fetchTopologyBundle()
+  - object: '/m/:gid/routes'
+    actions: ['GET']
+  - object: '/m/:gid/pipelines'
+    actions: ['GET']
+  - object: '/m/:gid/system/inputs'
+    actions: ['GET']
+  - object: '/m/:gid/system/outputs'
+    actions: ['GET']
+  - object: '/m/:gid/system/status/inputs'
+    actions: ['GET']
+  - object: '/m/:gid/system/status/outputs'
+    actions: ['GET']
+
+  # api/metrics.ts — queryMetrics() (Leader-level; confirmed live that /m/:gid/system/metrics/*
+  # 404s, group scoping happens via a __worker_group dimension in the query itself instead)
+  - object: '/system/metrics/query'
+    actions: ['POST']
+
+  # api/capture.ts — startCapture()
+  - object: '/m/:gid/system/capture'
+    actions: ['POST']
+
+  # api/workers.ts — listWorkers(). Group-scoped status endpoints above return health aggregated
+  # across every worker in a group; this lists the individual Worker processes so the drawer can
+  # also fetch each one's own real, unaggregated Destination status (see /w/:wid below).
+  - object: '/master/workers'
+    actions: ['GET']
+
+  # api/workers.ts — getWorkerOutputStatus(). Confirmed live: /w/:workerId is a Worker-scoped
+  # sibling of /m/:gid (Worker-Group-scoped) — see CLAUDE.md's Thirtieth round for how this was
+  # found (reading the real Leader UI's own bundled JS) and why the group-scoped call alone can
+  # miss a real per-worker outage.
+  - object: '/w/:wid/system/status/outputs'
+    actions: ['GET']
+
+  # api/workers.ts — getWorkerInputStatus(). Confirmed live that this Source-side sibling of the
+  # Destination endpoint above is a real, working path too (not previously used anywhere in this
+  # app) — powers both the drawer's per-worker Source status and the persistent-queue detail
+  # section on Source nodes.
+  - object: '/w/:wid/system/status/inputs'
+    actions: ['GET']
+
+  # api/workerInfo.ts — fetchWorkerSystemInfo(). Confirmed live for both a Stream Worker and an
+  # Edge Node: a real, on-demand snapshot of that one process (uptime, CPU tick counters, memory,
+  # disk, deployed config counts) — resolves the gap where the aggregated metrics store can't
+  # attribute system.* resource metrics per node for Edge Fleets at all.
+  - object: '/w/:wid/system/info'
+    actions: ['GET']
+
+  # api/workerInfo.ts — fetchWorkerRawMetricsTrend(), for the Worker Inventory detail drawer's
+  # best-effort per-node trend chart only (never fetched eagerly for a whole roster). Confirmed
+  # live and working with this app's own credentials once properly worker-scoped, but — like
+  # /system/logs/search above — marked `x-cribl-internal: true` in the bundled openapi.json, not
+  # part of the officially-supported product API surface; declared per the same explicit direction.
+  - object: '/w/:wid/system/metrics'
+    actions: ['GET']
+
+  # api/licenses.ts — fetchLicenseInfo()/fetchLicenseUsage(), for the License & Consumption page.
+  # Unprefixed and org-wide (no groupId in either path) — confirmed against their own OpenAPI
+  # definitions. Documented there as `x-cribl-availability: onprem` with a 403-in-SaaS-mode note,
+  # but confirmed live to actually return real 200 data against the test Cribl.Cloud org — see
+  # CLAUDE.md for this discrepancy.
+  - object: '/system/licenses'
+    actions: ['GET']
+  - object: '/system/licenses/usage'
+    actions: ['GET']
+
+  # api/logs.ts — fetchPipelineFunctionErrors(), for Signal Path's per-function error counts.
+  # Confirmed live and working with this app's own credentials, but marked
+  # `x-cribl-internal: true` in the bundled openapi.json — unlike every other endpoint declared in
+  # this file, which are all `false`. That's a real signal Cribl doesn't consider this part of the
+  # officially-supported product API for third-party Apps; an org admin reviewing this policy at
+  # install time should know that going in. Declared per explicit direction anyway — see CLAUDE.md.
+  - object: '/system/logs/search'
+    actions: ['GET']

@@ -1,0 +1,110 @@
+/* This page's own dedicated stylesheet — reuses `.ov-mono` (established in FleetRoster.css,
+   always loaded alongside this component since `OverviewPage.tsx` renders both) for tabular
+   numeric text, and defines everything new (`ov-node-drawer-*`) locally rather than reaching into
+   another page's own drawer classes. */
+
+.ov-node-drawer-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.md');
+  width: 100%;
+}
+
+.ov-node-drawer-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ov-node-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.lg');
+}
+
+.ov-node-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+}
+
+.ov-node-drawer-section-title {
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.default');
+}
+
+.ov-node-drawer-panel {
+  padding: token('spacing.md');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  background: token('color.background.panel.solid');
+}
+
+.ov-node-drawer-kv-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: token('spacing.xs') token('spacing.md');
+  font: token('typography.body.sm.normal');
+}
+
+.ov-node-drawer-kv-grid > span:nth-child(odd) {
+  color: token('color.foreground.subtle');
+}
+
+.ov-node-drawer-kv-grid > span:nth-child(even) {
+  text-align: right;
+}
+
+.ov-node-drawer-na {
+  color: token('color.foreground.placeholder');
+  font: token('typography.body.sm.normal');
+}
+
+.ov-node-drawer-drift {
+  display: inline-block;
+  margin-top: token('spacing.sm');
+  font: token('typography.body.xs.normal');
+}
+
+.ov-node-drawer-drift--ok {
+  color: token('color.foreground.success.default');
+}
+
+.ov-node-drawer-drift--stale {
+  color: token('color.foreground.warning.default');
+}
+
+.ov-node-drawer-drift-note {
+  margin-top: token('spacing.sm');
+}
+
+.ov-node-drawer-messages {
+  margin: 0;
+  padding-left: token('spacing.lg');
+  font: token('typography.body.sm.normal');
+}
+
+.ov-node-drawer-messages li {
+  margin-bottom: token('spacing.xs');
+}
+
+.ov-node-drawer-trend-grid {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.md');
+}
+
+.ov-node-drawer-trend-cell {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+}
+
+.ov-node-drawer-trend-label {
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+}

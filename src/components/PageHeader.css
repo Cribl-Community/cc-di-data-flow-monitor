@@ -1,0 +1,107 @@
+/* A step darker than the plain white viz canvas below it (`neutral.subtle`, matching the sidebar)
+   so the working canvas visibly stands out as its own, lighter surface rather than the chrome and
+   the diagram reading as one flat area. */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.lg');
+  padding: token('spacing.xl') token('spacing.2xl');
+  border-bottom: token('border.default');
+  background: token('color.background.neutral.subtle');
+}
+
+/* The page title's own row, widened into a flex row so the "Welcome, {name}" greeting can sit at
+   the opposite, top-right corner of the page rather than competing with the control-bar's own
+   filter controls below it. `flex-start` on the title's own alignment keeps it pinned to the top
+   if the greeting text ever wraps to a second line at a narrow width. */
+.page-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: token('spacing.lg');
+}
+
+.page-header-welcome {
+  white-space: nowrap;
+  padding-top: token('spacing.xs');
+}
+
+/* Flat by design — no border or shadow, so this reads as a section of the page rather than a
+   floating card. Same grey as `.page-header`/`.app-sidebar` now (was plain white) so the whole
+   top-chrome area reads as one consistent surface instead of a white island floating on grey;
+   the controls inside (`.pill-select`, `.segmented`) are bumped one step darker than this so they
+   still read as distinct, pressable pieces against it rather than disappearing into a flat field. */
+.control-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: token('spacing.md');
+  padding: token('spacing.md');
+  border-radius: token('radius.xl');
+  background: token('color.background.neutral.subtle');
+}
+
+.pill-select {
+  height: token('dimension.component.md');
+  padding: 0 token('spacing.lg') 0 token('spacing.md');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  background: token('color.background.neutral.default');
+  color: token('color.foreground.default');
+  font: token('typography.body.sm.semibold');
+  transition: border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+/* Border-highlight hover, matching the segmented buttons below — `color.border.accent.strong` is
+   the same token already used for the node card's own selected/hover-adjacent border elsewhere in
+   this app, so it's a proven safe choice in both themes rather than a new one-off color. */
+.pill-select:hover {
+  border-color: token('color.border.accent.strong');
+}
+
+/* Explicit height (matching `.pill-select` and the Refresh IconButton's own `md` size, both
+   `dimension.component.md`) rather than letting padding alone determine it — those two were
+   visibly taller than this control before. Background bumped one step darker than the (now grey)
+   `.control-bar` behind it for the same reason `.pill-select` was — an unfilled group here would
+   otherwise blend straight into the bar and read as un-interactive. */
+.segmented {
+  display: inline-flex;
+  height: token('dimension.component.md');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  background: token('color.background.neutral.default');
+  overflow: hidden;
+}
+
+.segmented button {
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 token('spacing.lg');
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+  transition: box-shadow token('motion.duration.short') token('motion.easing.standard'),
+    background-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.segmented button:focus-visible {
+  outline: token('border.focus');
+  outline-offset: -2px;
+}
+
+/* Inset box-shadow rather than a real border: these buttons sit flush against each other and
+   their shared container, so a layout-affecting border would shift neighboring buttons and the
+   group's own outer border on every hover. The inset shadow reads identically as a border without
+   any of that reflow. Skipped on `.active` (Events/Bytes selection, a status filter, etc.) — its
+   own solid accent fill already makes hover state obvious without a border on top of it. */
+.segmented button:hover:not(.active) {
+  background: token('color.background.neutral.hover');
+  box-shadow: inset 0 0 0 1px token('color.border.accent.strong');
+}
+
+.segmented button.active {
+  background: token('color.background.brand.solid.default');
+  color: token('color.foreground.brand.contrast');
+}
+

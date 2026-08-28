@@ -1,0 +1,161 @@
+.ov-svm-scroll {
+  overflow: auto;
+}
+
+.ov-svm-empty {
+  padding: token('spacing.lg');
+  text-align: center;
+  color: token('color.foreground.subtle');
+  font: token('typography.body.sm.normal');
+}
+
+/* `collapse` (not `separate`) gives real, continuous horizontal-only borders — every cell sets
+   only its own `border-bottom`, never a side border, so collapse mode merges each row boundary
+   into one clean line spanning the table's full stretched width with no vertical lines anywhere.
+   The earlier "rounded chicklet" look isn't gone, just moved one level down: `.ov-svm-chip` (a
+   plain `<div>` nested inside each `<td>`) carries the shaded background + border-radius, so the
+   *cell* can be a normal bordered table cell while the *chip* still reads as its own rounded tile
+   — a `border-collapse: collapse` table can't give individual cells their own border-radius
+   directly, hence the nesting. */
+.ov-svm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Same header format as the Node Inventory table (`.ov-roster-table th`/`.ov-th-plain` in
+   FleetRoster.css) — sticky, `neutral.subtle` background, uppercase/tracked/subtle text, the same
+   padding — so both panels' own headers read as one consistent treatment app-wide. */
+.ov-svm-corner,
+.ov-svm-col-head,
+.ov-svm-row-head {
+  position: sticky;
+  background: token('color.background.neutral.subtle');
+  font: token('typography.body.xs.semibold');
+  color: token('color.foreground.subtle');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-align: left;
+  padding: token('spacing.sm') token('spacing.md');
+  border-bottom: token('border.default');
+}
+
+/* Deliberately still a plain table cell (no `display: flex` here) — the corner and the column-head
+   cells beside it share one `<tr>`, and `border-collapse` only keeps every cell's own border on the
+   shared row edge aligned when every cell in that row stays a real table cell. Giving the corner
+   `display: flex` pulled it out of that shared layout/border model entirely, which is what made its
+   own bottom border render at a slightly different line than its siblings' — "Source ↓ / Dest →" is
+   now a single `white-space: nowrap` line (inherited from the shared header rule above) instead of
+   the two stacked spans this cell used to hold, so this header row's own height matches every other
+   Overview panel's single-line header row (Alert Feed included) instead of running one line taller. */
+.ov-svm-corner {
+  top: 0;
+  left: 0;
+  z-index: 2;
+  text-transform: none;
+  letter-spacing: normal;
+  color: token('color.foreground.placeholder');
+  font: token('typography.body.xs.normal');
+}
+
+/* No fixed width on the destination columns — with the row-head column shrunk to its own content
+   (`width: 1%` below, the standard shrink-to-fit trick), the table's own `width: 100%` means
+   whatever's left over splits across these columns automatically under the browser's normal
+   `table-layout: auto` column-sizing, rather than each column hugging just its own header text. */
+.ov-svm-col-head {
+  top: 0;
+  z-index: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+/* `width: 1%` is a standard shrink-to-fit trick (already used elsewhere in this app, e.g. the
+   Fleet/Node Inventory table's own action column, before it was removed) — under
+   `table-layout: auto`, an explicit width smaller than the content's own minimum is ignored in
+   favor of that minimum, so this column ends up exactly as wide as "Source ↓ / Dest →" or the
+   longest source name actually needs, never more. */
+.ov-svm-row-head {
+  left: 0;
+  z-index: 1;
+  width: 1%;
+}
+
+.ov-svm-cell {
+  padding: 4px;
+  border-bottom: token('border.default');
+  text-align: right;
+}
+
+.ov-svm-table tbody tr:last-child .ov-svm-cell,
+.ov-svm-table tbody tr:last-child .ov-svm-row-head {
+  border-bottom: none;
+}
+
+/* `inline-flex` (not `block`) so the cell's own `text-align: right` positions the whole chip —
+   every chip in the table has the same total width (its two number spans are pinned to the
+   table-wide `--ov-svm-in-w`/`--ov-svm-out-w` character counts below), so the "/" separator lands
+   at an identical offset from the chip's own right edge in every cell, in every row and column —
+   not just self-consistent within one cell's own pair of numbers. */
+.ov-svm-chip {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 6px 10px;
+  border: none;
+  border-radius: token('radius.md');
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: token('color.foreground.default');
+  white-space: nowrap;
+}
+
+/* A populated cell's own drilldown into Flow Explorer — a real `<button>`, not the dash-only
+   `<div>` an empty cell still uses (nothing to drill into there). A focus/hover ring via inset
+   `box-shadow` (not a real border/outline) so it can't shift the cell's own layout or the fixed
+   `--ov-svm-in-w`/`-out-w` alignment those two neighbors both depend on. */
+.ov-svm-chip--clickable {
+  cursor: pointer;
+}
+
+.ov-svm-chip--clickable:hover,
+.ov-svm-chip--clickable:focus-visible {
+  box-shadow: inset 0 0 0 2px token('color.border.accent.strong');
+}
+
+.ov-svm-in {
+  display: inline-block;
+  min-width: calc(var(--ov-svm-in-w, 0) * 1ch);
+  text-align: right;
+}
+
+.ov-svm-sep {
+  padding: 0 3px;
+  color: token('color.foreground.subtle');
+}
+
+.ov-svm-out {
+  display: inline-block;
+  min-width: calc(var(--ov-svm-out-w, 0) * 1ch);
+  text-align: right;
+}
+
+.ov-svm-chip--0 {
+  background: none;
+}
+
+.ov-svm-chip--1 {
+  background: token('color.background.accent.subtle');
+}
+
+.ov-svm-chip--2 {
+  background: token('color.background.accent.default');
+}
+
+.ov-svm-chip--3 {
+  background: token('color.background.accent.hover');
+}
+
+.ov-svm-dash {
+  color: token('color.foreground.placeholder');
+}

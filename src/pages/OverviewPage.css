@@ -1,0 +1,206 @@
+/* Same top-bar-to-content gap fix already applied to Flow Explorer — `.view-body`'s
+   own base rule (App.css) defaults to `align-items: center; justify-content: center` (built for a
+   single centered EmptyState) and a wider `spacing.2xl` padding, and defaults to flex's own `row`
+   direction (never set explicitly). A bare `.overview-body` selector loses a same-specificity tie
+   against that base rule on source order alone — the same specificity pitfall documented a few
+   times elsewhere in this app (see `.flow-explorer-body.view-body`) — so this is the compound
+   selector, not a bare one. `spacing.xl` matches Flow Explorer's own value, confirmed live as the
+   one every real page (other than Signal Path's own zero-body-padding case) actually uses.
+
+   `flex: 1; min-height: 0` (not a hard `overflow: hidden` here) — the whole *page* shouldn't need
+   to scroll at the normal desktop width/zoom the grid below is sized for; each panel scrolls
+   internally instead (`.ov-panel-body`'s own `overflow-y: auto`), the same "bounded outer
+   container, inner panels scroll" pattern Signal Path/Flow Explorer's own body wrappers already
+   use.
+
+   `overflow-y: auto` (not `hidden`) so a real page-level scrollbar appears exactly when it's
+   actually needed — a browser zoom level above 100% shrinks the *effective* viewport in CSS
+   pixels while every panel's own sizing stays the same, so content that fits cleanly at 100% can
+   genuinely stop fitting at, say, 125%. `auto` only ever shows a scrollbar once content truly
+   overflows (visually identical to `hidden` at a normal zoom level, where nothing overflows), so
+   this doesn't reintroduce a scrollbar for the common case — it just stops silently clipping the
+   uncommon one. The narrow-viewport media query below (panels stacked, one column) already relied
+   on the same `overflow-y: auto` for the same reason. */
+.overview-body.view-body {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: token('spacing.xl');
+  gap: token('spacing.lg');
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.overview-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- shared panel shell, reused by every Overview sub-component directly via className ---- */
+
+.ov-panel {
+  display: flex;
+  flex-direction: column;
+  background: token('color.background.panel.solid');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  overflow: hidden;
+}
+
+/* `spacing.sm` plus an explicit 5px each side — a flat 10px taller header row overall, which
+   doesn't land on any single spacing token step on its own. The `.overview-grid`'s own top-row
+   height (further down this file) is widened by the identical 10px so the grid's second, `1fr` row
+   absorbs the difference and the page's own total height doesn't change — see that rule's own
+   comment for the exact math. */
+.ov-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.sm');
+  padding: calc(token('spacing.sm') + 5px) token('spacing.md');
+  border-bottom: token('border.default');
+  flex-shrink: 0;
+}
+
+.ov-panel-title {
+  font: token('typography.body.sm.semibold');
+}
+
+.ov-panel-count {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.subtle');
+  margin-left: token('spacing.xs');
+  font-weight: 600;
+}
+
+/* A small "ⓘ" affordance next to a panel title, for a caveat that doesn't fit as always-visible
+   text — a real, focusable `<button>` (not a bare `<span>`) so the tooltip is keyboard/screen-
+   reader reachable too, matching this app's own established Tooltip+CustomTooltipTrigger
+   convention (see SettingsPanel.tsx's Theme/Sidebar-behavior icon rows). Shared here rather than
+   in one panel's own CSS file since more than one panel's own caveat could reasonably want it.
+   24×24 (up from an original 16×16, per direct feedback that the smaller circle was hard to
+   notice/click) while leaving the panel header row's own height untouched — this button sits
+   inline inside `.ov-panel-title`'s own text, so its rendered size normally does grow the line
+   box it sits in. The negative `margin-top`/`margin-bottom` (-4px each, exactly half the 8px this
+   grew by) cancel that out: the box still *renders* at the full 24px, but its margin box — what
+   the surrounding line actually reserves room for — measures back down to the original 16px, so
+   the circle visually overflows a little above/below the text without taking the row along with
+   it. Measured live before/after: the header row's own height is unchanged. */
+.ov-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-top: -4px;
+  margin-bottom: -4px;
+  margin-left: token('spacing.xs');
+  border: none;
+  border-radius: token('radius.full');
+  background: none;
+  padding: 0;
+  color: token('color.foreground.placeholder');
+  cursor: help;
+  vertical-align: -3px;
+}
+
+.ov-info-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.ov-info-icon:hover,
+.ov-info-icon:focus-visible {
+  color: token('color.foreground.accent.default');
+}
+
+.ov-info-icon:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 1px;
+}
+
+.ov-panel-action {
+  font: token('typography.body.xs.semibold');
+  color: token('color.foreground.accent.default');
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* A small, quiet caption in the panel head opposite the title — "as of 16:24", "worst of
+   load/mem/disk", "top 8 by volume" — shared by several panels, so it lives here rather than in
+   any one panel's own CSS file. */
+.ov-panel-static-action {
+  font: token('typography.body.xs.normal');
+  color: token('color.foreground.placeholder');
+  white-space: nowrap;
+}
+
+.ov-panel-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ---- top-level grid ---- */
+
+/* One shared grid for both visual "rows," not two independent `display: grid` containers — the
+   previous two-grid setup (`1fr 1fr 1fr` on top, `2fr 1fr` on bottom) looked like it should
+   produce matching column widths (1/3 either way, by the `fr` math), but didn't: row 1 has 2 gaps
+   across 3 columns and row 2 had only 1 gap across 2 columns, so the two rows' actual *pixel*
+   widths silently diverged by however much that extra gap ate into row 1's own columns — a
+   mismatch no `fr`-ratio tweak between two separate grids could ever fully close (the required
+   ratio to compensate isn't even a fixed constant — it depends on the container's own width).
+   A single grid with one real set of column tracks makes the two rows share literally the same
+   columns, so Worker Comparison (bottom-right) exactly matches Capacity Planning's width (top-
+   right) at every viewport size, not just approximately. Fleet Roster/Node Inventory
+   (bottom-left) spans the other two columns automatically — see `.overview-grid-wide` below —
+   which is also what "resize the bottom-left panel accordingly" reduces to: it's just "whatever
+   isn't the bottom-right column." */
+/* Top row height is sized to fit exactly 5 rows of its tallest sibling's own content — Volume
+   Matrix's per-source rows, each a 26px-tall chart plus 4px of padding top/bottom plus a 1px
+   border (35px/row) — under its own panel header. 222px = the previous 212px this held at, plus
+   the same flat 10px `.ov-panel-head` itself just grew by (see that rule's own comment) — grown by
+   exactly the header's own real measured delta, not re-derived from the header-height formula this
+   comment used to state, which (measured live) was already a few px off actual rendered height
+   even before this round's own change. The shorter-row panel beside it (Alert Feed) simply shows
+   more than 5 rows in the same space, not fewer — this isn't a per-panel cap, just the one height
+   that guarantees the tallest-per-row panel's own 5 rows fit with no internal scroll. The bottom
+   row gets whatever's left of the page (`minmax(0, 1fr)`, no forced minimum), so growing the top
+   row by 10px here shrinks the bottom row by that same 10px automatically — the page's own overall
+   height (and the "does it scroll at 100%" question) doesn't change either way. `.ov-panel-body`'s
+   own internal scroll still handles any bottom panel (Node Inventory in particular) whose real
+   content outgrows even that. */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 222px minmax(0, 1fr);
+  gap: token('spacing.lg');
+  flex: 1;
+  min-height: 0;
+}
+
+/* Fleet Roster/Node Inventory — the one bottom-row panel that isn't 1 column wide. Applied via
+   this structural selector (this grid always renders exactly 5 children, in this fixed order, in
+   the "ready" state) rather than a prop on `FleetRoster` itself, so the component stays agnostic
+   of which page/layout renders it. */
+.overview-grid > :nth-child(4) {
+  grid-column: span 2;
+}
+
+@media (max-width: 1200px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+  .overview-grid > :nth-child(-n + 3) {
+    height: auto;
+    max-height: 300px;
+  }
+  .overview-grid > :nth-child(4) {
+    grid-column: span 1;
+  }
+}

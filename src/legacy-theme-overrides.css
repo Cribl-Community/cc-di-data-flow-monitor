@@ -1,0 +1,96 @@
+/**
+ * Re-themes four specific token groups — Surfaces & Backgrounds, Text/Foreground, Borders &
+ * Dividers, Status Colors — to match the color combinations from the project's own prior attempt
+ * (`data_flow_monitor/test-app/src/styles/tokens.css`), per explicit direction following a
+ * side-by-side review of both palettes. Deliberately scoped to just those four groups — Accent
+ * and the qualitative multi-series chart palette are untouched and still use Capra's own values.
+ * (Accent was tried in a follow-up round — mapping the old app's 3-step teal ramp onto the
+ * specific `--cds2-*` accent variables this project's own code actually consumes — and then
+ * explicitly reverted back out per direction; see CLAUDE.md's own changelog for that mapping if
+ * it's ever wanted again.)
+ *
+ * Implemented as a direct override of Capra's own semantic CSS custom properties (`--cds2-*`),
+ * not by editing any component's own `token('...')` call — every component still goes through the
+ * same `token()` helper this platform requires (AGENTS.md), it just now resolves to a different
+ * literal value for these specific tokens. This file must load *after* `@capra/theme/base.css` for
+ * the cascade to apply — it's imported as the very last line in `App.tsx`, after `./App.css`
+ * (already established in this project as the reliable "wins on source order" spot — see
+ * CLAUDE.md's own history of specificity-tie bugs this exact pattern avoids). Selectors
+ * deliberately match Capra's own (`:root` for light, `.dark` for dark — applied to
+ * `document.documentElement` by `useApplyTheme`, see `lib/theme.ts`) rather than adding extra
+ * specificity or `!important`; matching specificity plus later source order is enough to win.
+ *
+ * Every value below is a direct copy of the old project's own token, not re-derived — see that
+ * file's own comments for further context (e.g. its accent ramp being confirmed live against a
+ * real installed Cribl app). Two deliberate refinements, not a raw copy:
+ * - The old app kept a separate `--status-warning-text` specifically because its own bright
+ *   warning dot color (`#fab219`) fails contrast as small text on a light surface —
+ *   `color.foreground.warning.default` here is a text/foreground-role token (status labels, not
+ *   just dots), so it takes the old app's own text-specific value instead of reintroducing the
+ *   exact contrast failure that second token existed to avoid.
+ * - `color.foreground.placeholder` (both themes) and `color.foreground.success.default` (light
+ *   only) were re-derived (hue-preserving darken/lighten, WCAG relative-luminance math) rather
+ *   than copied verbatim, once measuring the old app's own literal values against this app's own
+ *   two real backgrounds (panel *and* chrome — the token is used against both) found real AA
+ *   failures: darkening/lightening only far enough to pass the panel background left the value
+ *   still failing against the harder of the two, chrome. Each final value clears 4.5:1 against
+ *   both simultaneously. Dark-mode success (`#0ca30c`) already passed against both (5.29:1/5.75:1)
+ *   and was left unchanged.
+ */
+
+:root {
+  /* Surfaces & Backgrounds — real bug fixed here, not a re-copy of the old app's own values: its
+     own `--surface-1`/`--surface-2` (`#fcfcfb`/`#f9f9f7`) differ by 3 of 255 per channel, which is
+     imperceptible — confirmed by direct comparison, not assumed. That's the concrete cause behind
+     "white vs grey blends together" — the panel tier and the tier meant to sit one step below it
+     were, in practice, the same color. Dark mode's own three surface tiers (`application`/
+     `panel.solid`/`neutral.default`, still unchanged below) already step by a real, clearly
+     perceptible amount at each level, which is why it reads as fine — light mode now gets the same
+     real three-step gradient instead of two: `application` (the grey chrome/canvas, unchanged) →
+     `neutral.default` (a real, distinct middle tier — table headers, hover/alternating rows) →
+     `panel.solid` (brightened to a genuine white, so real content panels pop clearly against both
+     the grey chrome and the new middle tier, mirroring how dark mode's own `panel.solid` is the
+     clearly-lighter tier next to its own darkest, `application`). */
+  --cds2-color-background-application: #dde3ec;
+  --cds2-color-background-panel-solid: #ffffff;
+  --cds2-color-background-neutral-default: #eef1f5;
+  --cds2-color-background-neutral-subtle: #dde3ec; /* unchanged — same tier as `application`, matching dark mode's own identical pairing below */
+
+  /* Text / Foreground */
+  --cds2-color-foreground-default: #0b0b0b; /* old --text-primary */
+  --cds2-color-foreground-subtle: #52514e; /* old --text-secondary */
+  --cds2-color-foreground-placeholder: #676561; /* old --text-muted, darkened for AA against both the panel and chrome backgrounds above (measured 4.51:1 / 5.67:1) */
+
+  /* Borders & Dividers */
+  --cds2-color-border-neutral-subtle: rgba(11, 11, 11, 0.16); /* old --border */
+  --cds2-color-border-neutral-strong: rgba(11, 11, 11, 0.26); /* old --border-strong */
+
+  /* Status Colors */
+  --cds2-color-foreground-success-default: #097609; /* old --status-good, darkened for AA against both backgrounds above (measured 4.51:1 / 5.67:1) */
+  --cds2-color-foreground-warning-default: #8a5a00; /* old --status-warning-text (light) */
+  --cds2-color-foreground-danger-default: #d03b3b; /* old --status-critical */
+  --cds2-color-foreground-neutral-default: #898781; /* old --status-unknown */
+}
+
+.dark {
+  /* Surfaces & Backgrounds */
+  --cds2-color-background-application: #0a0e17;
+  --cds2-color-background-panel-solid: #111827;
+  --cds2-color-background-neutral-default: #1a2333;
+  --cds2-color-background-neutral-subtle: #0a0e17;
+
+  /* Text / Foreground */
+  --cds2-color-foreground-default: #ffffff;
+  --cds2-color-foreground-subtle: #94a3b8;
+  --cds2-color-foreground-placeholder: #728299; /* lightened for AA against both the panel and app backgrounds above (measured 4.54:1 / 4.93:1) */
+
+  /* Borders & Dividers */
+  --cds2-color-border-neutral-subtle: rgba(148, 163, 184, 0.16);
+  --cds2-color-border-neutral-strong: rgba(148, 163, 184, 0.28);
+
+  /* Status Colors */
+  --cds2-color-foreground-success-default: #0ca30c;
+  --cds2-color-foreground-warning-default: #fab219; /* old --status-warning-text (dark) */
+  --cds2-color-foreground-danger-default: #e66767;
+  --cds2-color-foreground-neutral-default: #898781;
+}

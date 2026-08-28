@@ -1,0 +1,38 @@
+.reduction-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+}
+
+/* "down" (volume trimmed before the destination) and "flat" (passed straight through) are both
+   ordinary, expected outcomes — neither gets a warning color, since neither is a problem. "up"
+   (output exceeding input) is the one direction that's actually unusual and worth a visual nudge. */
+.reduction-value--down,
+.reduction-value--flat {
+  color: token('color.foreground.subtle');
+}
+
+.reduction-value--up {
+  color: token('color.foreground.warning.default');
+}
+
+/* Distinguishes the default table/card treatment (`size="md"`) from subordinate detail
+   (`size="sm"`, e.g. Flow Explorer's individual-flow breakdown) — smaller text is the same
+   "subordinate detail" signal `body-xs-normal` + `color="subtle"` already give elsewhere. */
+.reduction-value--sm {
+  font-size: 12px;
+}
+
+/* A toolbar/summary chicklet's own treatment — matches its sibling chicklets' `metric-sm`-variant
+   `Text` numbers for weight/size/line-height (same token, so any future size change to one stays
+   in sync with the others) even though `ReductionValue` renders a plain `<span>` with no `Text`
+   variant prop of its own to reach for. The `font-family` longhand right after re-asserts the
+   code/mono face `.reduction-value`'s own base rule already set — `metric.sm`'s own shorthand
+   would otherwise silently switch this one size variant back to Capra's sans, the one place this
+   component wasn't actually consistent with its own stat/mono treatment everywhere else. */
+.reduction-value--lg {
+  font: token('typography.metric.sm');
+  font-family: token('core.fontFamily.mono');
+}

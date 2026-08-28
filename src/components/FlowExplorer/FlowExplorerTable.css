@@ -1,0 +1,692 @@
+/* Single source of truth for the table's own column widths, shared with the individual-flow
+   grid inside `ExpandedPath` (see `.flow-explorer-individual-flow-header` below) so its In/Out/
+   Reduction numbers land exactly under their counterparts in the row above without duplicating
+   magic pixel values in two places that could silently drift apart. */
+.flow-explorer {
+  --fe-col-count: 90px;
+  --fe-col-path: 110px;
+  --fe-col-trend: 110px;
+  --fe-col-num: 110px;
+  --fe-col-expand: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.md');
+  min-height: 0;
+  flex: 1;
+}
+
+.flow-explorer-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: token('spacing.md');
+}
+
+.flow-explorer-search {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  height: token('dimension.component.sm');
+  padding: 0 token('spacing.sm');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  color: token('color.foreground.placeholder');
+  max-width: 320px;
+  flex: 1;
+  transition: border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.flow-explorer-expand-all-btn {
+  height: token('dimension.component.sm');
+  padding: 0 token('spacing.md');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.default');
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.flow-explorer-expand-all-btn:hover:not(:disabled) {
+  border-color: token('color.border.accent.strong');
+}
+
+.flow-explorer-expand-all-btn:disabled {
+  color: token('color.foreground.placeholder');
+  cursor: not-allowed;
+}
+
+
+/* Aggregated totals across whatever `rows` currently shows — tracks the search/status/Top-10
+   filters live rather than always summarizing the whole graph. `margin-left: auto` pushes the
+   whole group to the far right of the toolbar row, past Expand All, rather than a separate bar
+   underneath — each stat its own small bordered tile ("chicklet"), not one continuous bar. */
+.flow-explorer-chicklets {
+  display: flex;
+  align-items: stretch;
+  gap: token('spacing.sm');
+  margin-left: auto;
+}
+
+/* Fixed `width` (not `min-width`) so all 4 chicklets read as one uniform row of tiles regardless
+   of each one's own content length ("Total out"/"254K" is naturally longer than "Flows"/"3") —
+   `center`-aligned on both axes to match. Widened from 104px to fit the larger `metric-sm` value
+   text below without crowding. */
+.flow-explorer-chicklet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 128px;
+  padding: token('spacing.sm') token('spacing.md');
+  border: token('border.default');
+  border-radius: token('radius.md');
+  background: token('color.background.panel.solid');
+  text-align: center;
+}
+
+.flow-explorer-chicklet-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.flow-explorer-search:focus-within {
+  border-color: token('color.border.accent.strong');
+}
+
+.flow-explorer-search svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.flow-explorer-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: token('typography.body.sm.normal');
+  color: token('color.foreground.default');
+}
+
+.flow-explorer-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: token('radius.full');
+  background: transparent;
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.flow-explorer-search-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+.flow-explorer-search-clear:hover {
+  background: token('color.background.neutral.hover');
+  color: token('color.foreground.default');
+}
+
+.flow-explorer-search-clear:focus-visible {
+  outline: 2px solid token('color.border.accent.strong');
+  outline-offset: 1px;
+}
+
+.flow-explorer-scroll {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+  border: token('border.default');
+  border-radius: token('radius.lg');
+}
+
+.flow-explorer-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: token('color.background.panel.solid');
+}
+
+.flow-explorer-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: token('color.background.neutral.subtle');
+  padding: 0;
+  border-bottom: token('border.default');
+  text-align: left;
+}
+
+.flow-explorer-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  width: 100%;
+  padding: token('spacing.sm') token('spacing.md');
+  border: none;
+  background: none;
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+}
+
+.flow-explorer-sort-btn:hover {
+  color: token('color.foreground.default');
+}
+
+.flow-explorer-sort-indicator {
+  font-size: 9px;
+}
+
+/* `width: 1%` + `white-space: nowrap` is the standard table trick to make a column shrink to its
+   content's natural width instead of an arbitrary guessed pixel value — this column only ever
+   holds one fixed-size pill, so it should take only exactly the room that needs, leaving more of
+   the row for Flow/Path/Trend. Tighter padding than the other cells for the same reason.
+   `.flow-explorer-row td.flow-explorer-col-status` (not just the bare class) so this reliably
+   outranks `.flow-explorer-row td`'s own padding below without needing `!important`. */
+.flow-explorer-col-status {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.flow-explorer-row td.flow-explorer-col-status {
+  padding: token('spacing.sm');
+}
+
+.flow-explorer-col-num {
+  width: var(--fe-col-num);
+  text-align: right;
+}
+
+.flow-explorer-col-num .flow-explorer-sort-btn {
+  justify-content: flex-end;
+}
+
+.flow-explorer-col-expand {
+  width: var(--fe-col-expand);
+  text-align: center;
+}
+
+.flow-explorer-col-path,
+.flow-explorer-col-trend {
+  width: var(--fe-col-path);
+  padding: token('spacing.sm') token('spacing.md');
+  text-align: left;
+}
+
+.flow-explorer-col-count {
+  width: var(--fe-col-count);
+  text-align: center;
+}
+
+/* Path/Trend/Flows have no sort control, so they were plain <th> text with no typography rule of
+   their own — inheriting the page's default body text rather than matching `.flow-explorer-sort-
+   btn`'s uppercase/subtle treatment the other (sortable) headers use. Matched here explicitly so
+   every column label reads as one consistent set regardless of whether it happens to be
+   sortable. */
+th.flow-explorer-col-path,
+th.flow-explorer-col-trend,
+th.flow-explorer-col-count {
+  padding: token('spacing.sm') token('spacing.md');
+  font: token('typography.body.xs.semibold');
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: token('color.foreground.subtle');
+}
+
+.flow-explorer-row {
+  cursor: pointer;
+  transition: background-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.flow-explorer-row:hover {
+  background: token('color.background.neutral.subtle');
+}
+
+/* More vertical padding than the header/other tables in this app — with a Path glyph and a Trend
+   sparkline both living in this row, the original `spacing.sm` padding read as visually cramped,
+   and `spacing.md` alone (the first bump) still read a bit busy, so this went a step further
+   still. No matching token between `spacing.md` (8px) and `spacing.lg` (16px), so this is an
+   explicit value rather than a token. */
+.flow-explorer-row td {
+  padding: 14px token('spacing.md');
+  border-bottom: token('border.default');
+  vertical-align: middle;
+}
+
+/* A small neutral-grey pill around the dot, matching the reference mockup exactly — the pill's
+   own background is *not* status-tinted (every row's pill is the same neutral chip); only the
+   dot inside carries the status color. An earlier version tinted the pill itself per status,
+   which read as a real style mismatch once compared side by side with the mockup. */
+.flow-explorer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: token('radius.full');
+  background: token('color.background.neutral.default');
+  vertical-align: middle;
+}
+
+.flow-explorer-status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.flow-explorer-status-dot--success {
+  background: token('color.background.success.solid.default');
+}
+
+.flow-explorer-status-dot--warning {
+  background: token('color.background.warning.solid.default');
+}
+
+.flow-explorer-status-dot--danger {
+  background: token('color.background.danger.solid.default');
+}
+
+.flow-explorer-status-dot--default {
+  background: token('color.background.neutral.solid.default');
+}
+
+/* Capra's `Text` resets `display` to `inline` internally (see the same issue documented on
+   `.settings-page-label`) — this `<td>` needs to be the flex container itself so the name and
+   subtitle stack instead of running together on one line. */
+td.flow-explorer-col-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  width: auto;
+}
+
+/* Stats only, not the whole page — per the app-wide typography direction, numbers get the
+   monospace/code face (tabular by construction, reads as "this is data") while prose (flow names,
+   subtitles, captions) stays in Capra's own sans, the same split the drawer/canvas already use via
+   `ReductionValue.css`. This page used to force mono onto *everything*, including prose — reverted
+   back to this split rather than the all-mono treatment. `!important` is deliberate (Capra's `Text`
+   sets its own `font` shorthand at equal specificity — see NodeCard.css's `.node-card-stat-value`
+   for the full reasoning, including a second, real bug found in the same round: this rule's own
+   family token used to be `typography.code`, a shorthand that's invalid inside `font-family` and
+   was a silent, undetected no-op — `core.fontFamily.mono` below is the actual family-only token). */
+.flow-explorer-mono {
+  font-family: token('core.fontFamily.mono') !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-explorer-col-expand svg {
+  width: 16px;
+  height: 16px;
+  color: token('color.foreground.subtle');
+}
+
+/* No padding/border/background of its own — the row's whole visible footprint (padding,
+   background, bottom border) lives on `.flow-explorer-expand-anim-inner` below instead, so that a
+   collapsed row (its grid track sized to 0px, see `.flow-explorer-expand-anim`) contributes
+   genuinely zero height, not just zero-height content inside a still-padded/bordered cell — the
+   `<td>` itself would otherwise always render a full `spacing.xl` of padding and a 1px border
+   regardless of expanded state, doubling every row's own bottom divider permanently. */
+.flow-explorer-expand-row td {
+  padding: 0;
+}
+
+/* Real bug found live, not by eye: the phantom Status-width `<td>` at the start of this row stayed
+   fully transparent while its sibling cell's own inner content div (`.flow-explorer-expand-anim-
+   content` below) carries a real, opaque tinted background — the hard edge between "transparent"
+   and "tinted," landing at the exact x-position right below every row's own status dot, rendered as
+   a persistent vertical seam down the left side of every expanded block. With several rows expanded
+   at once, that seam reads as one continuous line running past row boundaries, making it genuinely
+   ambiguous which row's own status dot/heading a given diagram belongs to — confirmed via a direct
+   `getBoundingClientRect()`/`backgroundColor` reading of both cells, not assumed from a screenshot.
+   Matching this phantom cell's own background to the same tint removes the seam entirely, so the
+   whole expanded block (phantom cell included) reads as one continuous, unambiguous strip directly
+   under the one row it belongs to. */
+.flow-explorer-expand-row td.flow-explorer-col-status {
+  background: token('color.background.neutral.subtle');
+}
+
+/* A second, real bug found the same way (measured, not eyeballed): the row's own bottom divider
+   line lived only on `.flow-explorer-expand-anim-content` three layers deep — a div that fills
+   just the *content* `<td>`, never the phantom Status `<td>` beside it, so the line stopped short
+   at that column's own width instead of spanning the full row, reading as a break partway across.
+   It also meant this row's own bottom edge and the *next* row's top edge (the collapsed row
+   directly below, via `.flow-explorer-row td`'s own `border-bottom`) were two independently-
+   positioned borders from two different box levels rather than one shared table-grid line — under
+   `border-collapse: collapse`, a tied same-width/same-style-but-different-color pair like that is
+   left genuinely unspecified by the CSS 2.1 conflict-resolution algorithm, which is exactly the
+   kind of "doesn't quite line up, depends on the browser" gap this was reported as. Fixed by
+   declaring the border exactly once, at the real table-cell level (both `<td>`s of this row, so it
+   spans the phantom column too), instead of on a nested div — the standard, fully-supported table
+   border model then guarantees one continuous line at one shared Y position, with nothing left to
+   the browser's own tie-breaking.
+   Gated on `.is-open` (a class the row itself now carries — see FlowExplorerTable.tsx) rather than
+   applied unconditionally: this row's own `<td>`s always exist in the DOM even while collapsed, and
+   a border (unlike padding) still contributes to a box's rendered size regardless of how tall its
+   content is — declaring it unconditionally would have added a permanent extra 1px line under
+   *every* row, expanded or not, which the original bug never had (a collapsed row was genuinely
+   invisible, 0px tall, no line).
+   Bolder than the app-wide `border.default` in light theme specifically
+   (`color.border.neutral.strong`, reverted to the standard weight in dark via the override below)
+   — per direct feedback: light mode's own deliberately higher-contrast panel/neutral-subtle
+   surface separation (see legacy-theme-overrides.css) makes the thin default border read as
+   comparatively faint next to it, while dark mode's own lower-contrast surfaces already read the
+   standard weight clearly. */
+.flow-explorer-expand-row.is-open td {
+  border-bottom: 1px solid token('color.border.neutral.strong');
+}
+
+.dark .flow-explorer-expand-row.is-open td {
+  border-bottom: token('border.default');
+}
+
+/* The 0fr/1fr grid-row trick: the standard CSS-only way to transition between a real "auto"
+   content height and zero without measuring anything in JS (a plain `max-height` transition would
+   either clip tall content or need a guessed-too-large ceiling that makes short content animate at
+   the wrong speed). `.flow-explorer-expand-anim-inner` is the grid item; browsers only need to
+   animate the *track* to `1fr`, and the item's own natural content height determines what that
+   resolves to, remaining correct for content of any length. Used for both the individual per-row
+   toggle and "Expand all"/"Collapse all" — both just flip this same `is-open` class, so nothing
+   about the animation itself needs to know which triggered it. */
+.flow-explorer-expand-anim {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows token('motion.duration.medium.1') token('motion.easing.standard');
+}
+
+.flow-explorer-expand-anim.is-open {
+  grid-template-rows: 1fr;
+}
+
+/* `overflow: hidden` is load-bearing, not decorative — it's what actually clips this grid item's
+   content down to the track's own animated size on every frame; without it the content would just
+   render at its natural height regardless of the track size above. Deliberately carries no
+   padding/background of its own — a real, measured bug found while verifying this: padding placed
+   directly on the *grid item* still contributes to its rendered box size even when its content is
+   clipped to 0 by `overflow: hidden` (padding isn't "content," so it survives the clip), which kept
+   a collapsed row stuck at ~48px (exactly the vertical padding) instead of reaching 0. Padding
+   belongs one level deeper, on `.flow-explorer-expand-anim-content` below, so this item's own box
+   has nothing but content in it for `overflow: hidden` to actually zero out. */
+.flow-explorer-expand-anim-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Left padding matched to the Flow column's own left padding (`.flow-explorer-row td`'s horizontal
+   `spacing.md`) rather than `spacing.lg`, combined with the phantom Status-width `<td>` before this
+   one (see FlowExplorerTable.tsx), so the diagram/individual-flow content starts at exactly the
+   same x-position as the row label above it — a real "nested under this row" hierarchy, not a
+   flush-left block. No `border-bottom` of its own — that line now lives on the real table cells
+   (`.flow-explorer-expand-row.is-open td` above), not this inner div, so it spans the full row
+   width instead of stopping at this div's own edge. */
+.flow-explorer-expand-anim-content {
+  padding: token('spacing.xl') token('spacing.lg') token('spacing.xl') token('spacing.md');
+  background: token('color.background.neutral.subtle');
+}
+
+.flow-explorer-expand {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.lg');
+}
+
+/* Bigger, more spaced-out boxes and thicker connectors than the compact per-row `PathGlyph` —
+   this is the "zoomed in" detail view, not the at-a-glance summary, and the reference mockup's
+   own expanded diagram is noticeably larger/bolder than its own Path column glyph too. */
+.flow-explorer-path {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+/* The Destination-side blocked-worker badge (see `WorkerAlertBadge.tsx`) sits at the chain's right
+   edge, right where the Destination box is — "on the right of the flow," per explicit direction —
+   renders nothing when there's no real per-worker alert for that Destination, so this margin only
+   ever applies when the badge is actually present. The Source-side badge is the mirror case at the
+   chain's *left* edge, right before the SRC box — same real per-worker signal
+   (`useSourceWorkerAlerts`), same "renders nothing when there's no real alert" behavior. Both sit
+   inside an always-present `.flow-explorer-path-badge--{src,dest}` wrapper span (empty and
+   zero-size when the badge itself renders nothing) rather than relying on `:first-child`/
+   `:last-child` — since either badge alone can end up as *both* the first and last `.worker-alert`
+   in the DOM when the other side has no alert, a position-based selector can't reliably tell which
+   side is which. */
+.flow-explorer-path-badge--src .worker-alert {
+  margin-right: token('spacing.sm');
+}
+
+.flow-explorer-path-badge--dest .worker-alert {
+  margin-left: token('spacing.sm');
+}
+
+.flow-explorer-path-step {
+  display: flex;
+  align-items: center;
+}
+
+/* A fixed `width`/`height` (not `min-`) so every box in the chain reads as the same size
+   regardless of how long its label is — a long Pipeline id no longer stretches its own box
+   wider than its neighbors. Column layout so the small stage tag (SRC/PRE/ROUTES/PIPE/POST/DEST)
+   sits above the name instead of sharing its line. `radius.xl`, not `radius.lg` — bumped a step
+   per explicit feedback that these boxes should read more rounded. */
+.flow-explorer-path-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 116px;
+  height: 56px;
+  padding: token('spacing.xs') token('spacing.sm');
+  border-radius: token('radius.xl');
+  border: 2px solid;
+  background: token('color.background.panel.solid');
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.flow-explorer-path-box-kind {
+  font: token('typography.body.xs.semibold');
+  letter-spacing: 0.06em;
+  color: token('color.foreground.subtle');
+}
+
+.flow-explorer-path-box-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flow-explorer-path-box--success {
+  border-color: token('color.background.success.solid.default');
+}
+
+.flow-explorer-path-box--warning {
+  border-color: token('color.background.warning.solid.default');
+}
+
+.flow-explorer-path-box--danger {
+  border-color: token('color.background.danger.solid.default');
+}
+
+.flow-explorer-path-box--default {
+  border-color: token('color.background.neutral.solid.default');
+}
+
+.flow-explorer-path-connector {
+  width: 48px;
+  height: 4px;
+  flex-shrink: 0;
+}
+
+.flow-explorer-path-connector--success {
+  background: token('color.background.success.solid.default');
+}
+
+.flow-explorer-path-connector--warning {
+  background: token('color.background.warning.solid.default');
+}
+
+.flow-explorer-path-connector--danger {
+  background: token('color.background.danger.solid.default');
+}
+
+.flow-explorer-path-connector--default {
+  background: token('color.background.neutral.solid.default');
+}
+
+.flow-explorer-empty-row td {
+  padding: token('spacing.2xl');
+  text-align: center;
+}
+
+.flow-explorer-path-glyph-line {
+  stroke-width: 2;
+}
+
+.flow-explorer-path-glyph-line--success {
+  stroke: token('color.background.success.solid.default');
+}
+
+.flow-explorer-path-glyph-line--warning {
+  stroke: token('color.background.warning.solid.default');
+}
+
+.flow-explorer-path-glyph-line--danger {
+  stroke: token('color.background.danger.solid.default');
+}
+
+.flow-explorer-path-glyph-line--default {
+  stroke: token('color.background.neutral.solid.default');
+}
+
+/* Hollow rings (light fill + colored stroke), not solid filled dots — matches the reference
+   mockup's own SVG exactly (`fill="var(--surface-2)" stroke="var(--status-good)"`). */
+.flow-explorer-path-glyph-dot {
+  fill: token('color.background.neutral.subtle');
+  stroke-width: 2;
+}
+
+.flow-explorer-path-glyph-dot--success {
+  stroke: token('color.background.success.solid.default');
+}
+
+.flow-explorer-path-glyph-dot--warning {
+  stroke: token('color.background.warning.solid.default');
+}
+
+.flow-explorer-path-glyph-dot--danger {
+  stroke: token('color.background.danger.solid.default');
+}
+
+.flow-explorer-path-glyph-dot--default {
+  stroke: token('color.background.neutral.solid.default');
+}
+
+.flow-explorer-sparkline-line--success {
+  stroke: token('color.background.success.solid.default');
+}
+
+.flow-explorer-sparkline-line--warning {
+  stroke: token('color.background.warning.solid.default');
+}
+
+.flow-explorer-sparkline-line--danger {
+  stroke: token('color.background.danger.solid.default');
+}
+
+.flow-explorer-sparkline-line--default {
+  stroke: token('color.background.neutral.solid.default');
+}
+
+.flow-explorer-sparkline-line {
+  stroke-width: 1.5;
+}
+
+.flow-explorer-sparkline-empty {
+  color: token('color.foreground.placeholder');
+  font-size: 12px;
+}
+
+/* --- Multi-flow breakdown (more than one Route rule sharing a Source+Destination pair) --- */
+
+.flow-explorer-individual-flows {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.md');
+  padding-top: token('spacing.md');
+  border-top: token('border.default');
+}
+
+.flow-explorer-individual-flow {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.sm');
+}
+
+/* A 6-track grid — name, a spacer sized to the parent table's combined Count+Path+Trend column
+   widths, In/Out/Reduction at `--fe-col-num` each, and a trailing `--fe-col-expand` matching the
+   real Expand column (left empty — nothing shown there) — so these numbers land directly under
+   their In/Out/Reduction counterparts in the row above, the same format as the aggregate row
+   (raw number, no "in"/"out" suffix words, since the parent table's own column headers already
+   say that) just visibly smaller/lighter to read as subordinate detail, not a second aggregate.
+   The trailing Expand track matters: without it, "1fr" would absorb 36px more than the real Flow
+   column ever does, since it wouldn't know to leave that room, and every column after it would
+   drift right by that same 36px. `column-gap: 0` for the same reason — the real table's `<td>`s
+   are directly adjacent with no gap between them; introducing one here breaks the "same widths
+   reproduce the same on-screen positions" premise this whole layout depends on. */
+/* `margin-left`/`margin-right` cancel exactly the container's own left/right padding
+   (`.flow-explorer-expand-content`'s `spacing.md`/`spacing.lg`, see above) — that padding is
+   correct for FlowChain/the caption (it's what gives them their own "start at the row label's
+   indent" position), but for *this* grid it would otherwise eat into the space the width math
+   below depends on: the grid's content-box needs to equal the *real* combined width of the 8
+   spanned columns exactly (guaranteed by colSpan, regardless of viewport) for `1fr` to land on
+   the same width the real Flow column has. Pulling the padding back out via negative margins,
+   then reintroducing just the Flow column's own left inset on `.flow-explorer-individual-flow-
+   name` and the num columns' own right inset on `.flow-explorer-individual-flow-num` below,
+   reproduces each real cell's own padding individually instead of one lump container padding. */
+.flow-explorer-individual-flow-header {
+  display: grid;
+  grid-template-columns:
+    1fr
+    calc(var(--fe-col-count) + var(--fe-col-path) + var(--fe-col-trend))
+    var(--fe-col-num)
+    var(--fe-col-num)
+    var(--fe-col-num)
+    var(--fe-col-expand);
+  align-items: center;
+  column-gap: 0;
+  margin-left: calc(-1 * token('spacing.md'));
+  margin-right: calc(-1 * token('spacing.lg'));
+}
+
+.flow-explorer-individual-flow-name {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.sm');
+  min-width: 0;
+  padding-left: token('spacing.md');
+}
+
+.flow-explorer-individual-flow-num {
+  padding-right: token('spacing.md');
+  text-align: right;
+}

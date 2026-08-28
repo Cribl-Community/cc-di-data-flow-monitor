@@ -1,0 +1,465 @@
+.node-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+  width: 100%;
+  padding: token('spacing.sm') token('spacing.md');
+  border-radius: token('radius.lg');
+  border: token('border.default');
+  border-left-width: 3px;
+  background: token('color.background.panel.solid');
+  cursor: pointer;
+  transition: box-shadow token('motion.duration.short') token('motion.easing.standard');
+}
+
+.node-card:hover {
+  box-shadow: token('shadow.low.down');
+}
+
+/* The "stretched button" pattern: a real, focusable control the size of the whole card, sitting
+   behind everything else in stacking order (see `.node-card-top`'s own z-index) so its focus ring
+   traces the card's own edges for free via `inset: 0` + `border-radius: inherit`, without the card
+   itself needing to be — or contain — an interactive element. */
+.node-card-stretch-link {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.node-card-stretch-link:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+.node-card--selected {
+  border-color: token('color.border.accent.strong');
+  box-shadow: token('shadow.low.down');
+}
+
+.node-card--dimmed {
+  opacity: 0.35;
+}
+
+.node-card--highlighted {
+  box-shadow:
+    0 0 0 2px token('color.border.accent.strong'),
+    token('shadow.low.down');
+}
+
+.node-card--disabled {
+  opacity: 0.5;
+}
+
+/* Ledger direction: no tinted background — every card sits on the same plain panel color, status
+   lives in the colored left rail alone (a separate status word next to the label was removed as
+   redundant with it — see `.node-card-top` below), rather than a wash across the whole card. */
+.node-card--success {
+  border-left-color: token('color.background.success.solid.default');
+}
+
+.node-card--warning {
+  border-left-color: token('color.background.warning.solid.default');
+}
+
+.node-card--danger {
+  border-left-color: token('color.background.danger.solid.default');
+}
+
+.node-card--default {
+  border-left-color: token('color.background.neutral.solid.default');
+}
+
+.node-card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: token('spacing.sm');
+}
+
+/* The blocked-worker badge (see `WorkerAlertBadge.tsx`) sits left of the redirect icon — real
+   estate the removed status word (see the comment above `.node-card--success` etc.) used to
+   occupy — and only ever renders for a Destination/Output Router with a real per-worker alert. */
+.node-card-top .worker-alert {
+  flex-shrink: 0;
+}
+
+/* Routes only: a full-width rule between the "Routes" header and the rule list below it, so the
+   two visually separate the way the Sources/Pipelines/etc. lane headers already separate from
+   their own cards. Extended past the card's own horizontal padding via matching negative margins
+   so it runs genuinely edge-to-edge instead of stopping short at the card's internal padding. */
+.node-card-top--routes {
+  margin: 0 calc(-1 * token('spacing.md'));
+  padding: 0 token('spacing.md') token('spacing.sm');
+  border-bottom: token('border.default');
+}
+
+.node-card-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-card-open {
+  flex-shrink: 0;
+}
+
+/* Persistent-queue status icon — only rendered when `node.pq` is set (PQ actually enabled on this
+   Source/Destination), sized to match the redirect icon's own 16px visible glyph exactly rather
+   than an arbitrary icon size, matching the same "hit-area vs visible glyph" reasoning already
+   established for the worker-alert badge (`WorkerAlertBadge.css`). Purely a status indicator (the
+   real detail lives in the drawer once opened), so no hit-area/click affordance of its own. */
+.node-card-pq {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.node-card-pq svg {
+  width: 16px;
+  height: 16px;
+}
+
+.node-card-pq--success {
+  color: token('color.foreground.success.default');
+}
+
+.node-card-pq--warning {
+  color: token('color.foreground.warning.default');
+}
+
+.node-card-pq--danger {
+  color: token('color.foreground.danger.default');
+}
+
+.node-card-pq--default {
+  color: token('color.foreground.neutral.default');
+}
+
+/* Always danger — unlike PQ health (which has a real multi-state spectrum), a nonzero processing
+   error count is unambiguously a problem, so there's no other tone this would ever need. */
+/* Wider than a bare icon now that it also shows the real error count next to it (not just a
+   static "!") — height still matches every other icon in this row (16px), width grows with the
+   digit count instead of staying fixed. `button.node-card-err-badge` (element + class), not a
+   bare class — `FunctionErrorHover`'s own `.function-error-trigger` base rule sets `color:
+   inherit` at the same 0,1,0 specificity a bare `.node-card-err-badge` would have, which would
+   make this lose on cascade source order alone (the same specificity pitfall documented several
+   times elsewhere in this app, e.g. `.ov-kpi` → `button.ov-kpi`). */
+button.node-card-err-badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+  flex-shrink: 0;
+  color: token('color.foreground.danger.default');
+  font-family: token('core.fontFamily.mono');
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.node-card-err-badge svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.node-card-chain {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  color: token('color.foreground.accent.default');
+}
+
+.node-card-chain svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* A Destination whose real config is a Cribl-to-Cribl hop (`cribl_tcp`/`cribl_http`) into another
+   Worker Group, not a final terminus — dashed border marks it as "continues elsewhere," distinct
+   from every other card's own solid, health-colored border-left. */
+.node-card--cross-deployment {
+  border-left-style: dashed;
+  border-style: dashed;
+}
+
+/* `position: relative; z-index: 1` is required, not decorative — same reasoning as `.node-card-top`
+   and `.route-rules-list`'s own identical fix (see their own doc comments): this button is a plain
+   sibling of `.node-card-top`, not nested inside it, so without its own stacking context it would
+   sit behind `.node-card-stretch-link` and silently never receive a click. */
+button.node-card-cross-deployment-link {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: token('color.foreground.accent.default');
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.node-card-cross-deployment-link:hover,
+button.node-card-cross-deployment-link:focus-visible {
+  text-decoration: underline;
+}
+
+button.node-card-cross-deployment-link:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+.node-card-cross-deployment-link svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* Connector type value only (e.g. "datagen"), no "type=" prefix — Sources, Destinations, and
+   Output Routers only, since that's the only kind with a single meaningful connector type; same
+   quiet code-styled treatment as the route rule filter expression elsewhere in this file.
+   Negative top margin tightens it against the name above — `.node-card`'s own `gap` (spacing.xs,
+   2px) applies uniformly to every stacked child, slightly more than wanted for this one pairing
+   specifically, so it's pulled in further just here rather than shrinking the card's gap token
+   everywhere (which would also affect the spacing below this line). */
+.node-card-type {
+  margin-top: -1px;
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.subtle');
+}
+
+/* Stats, not prose — the monospace/code face (tabular by construction) marks a number as data to
+   read precisely, same split `ReductionValue`/Flow Explorer's own numeric columns already use.
+   Two real bugs found and fixed live while wiring this up, both worth remembering:
+   (1) `font-family: token('typography.code')` is invalid CSS — `typography.code` is a *shorthand*
+   token (weight/size/line-height/family together), and a shorthand's raw value doesn't parse as a
+   valid `font-family` (a plain family list). The browser silently discards the whole declaration
+   as invalid rather than warning, so this was a real, undetected no-op everywhere it was used
+   across the app (confirmed live via `document.styleSheets`, not just suspected) — the actual
+   family-only token is `core.fontFamily.mono`, used here instead. (2) Separately, `!important` is
+   still needed on top of that fix: Capra's `Text` component sets its own `font` shorthand at the
+   same specificity a plain class selector has, so a normal override risks losing a
+   same-specificity tie on source order alone — the same reasoning already on record for this
+   project (see `.settings-body.view-body`'s history). */
+.node-card-stat-value {
+  font-family: token('core.fontFamily.mono') !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.node-card-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: token('spacing.sm');
+  margin-top: auto;
+  padding-top: token('spacing.xs');
+}
+
+.node-card-bottom--io {
+  align-items: center;
+}
+
+.node-card-io {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.node-card-io--in {
+  align-items: flex-start;
+}
+
+.node-card-io--reduction {
+  align-items: center;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.node-card-io--out {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* `position: relative; z-index: 1` (matching `.node-card-top`'s own identical fix) is required,
+   not decorative — without it, `.node-card-stretch-link` (an absolutely-positioned, z-index:0
+   sibling earlier in the DOM) paints *above* this plain in-flow content regardless of DOM order,
+   silently swallowing every pointer event meant for a rule row or the "+N more" toggle below.
+   Confirmed live via Playwright before this fix: `page.hover()` on a rule row timed out with
+   "<button class="node-card-stretch-link"> intercepts pointer events" — a real, pre-existing bug
+   (unrelated to this file's own history of `.node-card-top`-only fixes) that silently made every
+   rule row and the toggle button unclickable/unhoverable the entire time they've existed. */
+.route-rules-list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-rules-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: token('typography.body.xs.normal');
+  padding: token('spacing.xs') token('spacing.xs') token('spacing.xs') token('spacing.sm');
+  border-bottom: 1px solid token('color.border.neutral.subtle');
+  border-left: 3px solid token('color.background.neutral.solid.default');
+}
+
+.route-rule-row-top {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.xs');
+}
+
+.route-rules-list li:last-child {
+  border-bottom: none;
+}
+
+.route-rules-list li.is-disabled {
+  opacity: 0.5;
+}
+
+/* Each rule's own status becomes a colored left edge for *that row* — the Routes card itself
+   stays neutral (see node-card--default above), so this is the only status cue for a given rule,
+   and can legitimately show several different colors stacked within one card.
+   Qualified with the `li` type selector to MATCH `.route-rules-list li` above's specificity
+   (0,1,1, not just 0,1,0) — without this, the base rule's neutral border-left always won
+   regardless of source order, since higher specificity beats declaration order every time. This
+   was the actual root cause of rows staying grey no matter what status they'd resolved to. */
+li.route-rule-row--success {
+  border-left-color: token('color.background.success.solid.default');
+}
+
+li.route-rule-row--warning {
+  border-left-color: token('color.background.warning.solid.default');
+}
+
+li.route-rule-row--danger {
+  border-left-color: token('color.background.danger.solid.default');
+}
+
+li.route-rule-row--default {
+  border-left-color: token('color.background.neutral.solid.default');
+}
+
+/* Slightly larger than the row's own inherited `body.xs.normal` (10px) — at that size, next to
+   the bold route name, the index read as too faint to register as a number at a glance. */
+.route-rule-index {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.placeholder');
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* Cribl's own implicit "no rule claimed this" fallback (see `GraphNode.endRoute`'s own doc
+   comment) — a small gap and a hairline top border set it apart from the real, user-configured
+   rule list right above it, without a heavier visual treatment that would suggest it's somehow
+   less "real" than it is (its own connections behave exactly like any other rule's). */
+.route-rules-list--end-route {
+  margin-top: token('spacing.xs');
+  padding-top: token('spacing.xs');
+  border-top: 1px solid token('color.border.neutral.subtle');
+}
+
+.route-rules-list--end-route li:last-child {
+  border-bottom: none;
+}
+
+/* A "↳" glyph instead of a sequential number — this row isn't the Nth configured rule, it's
+   Cribl's own always-last implicit fallback, and a number here would misleadingly suggest it's
+   part of the same ordered, user-authored list. */
+.route-rule-index--end-route {
+  font-size: 12px;
+}
+
+/* Italicized name is the one deliberate visual distinction from a real rule row — everything else
+   (left-border status color, hover/click behavior) matches a real row exactly, per direction that
+   this behaves as a normal connection, not a special-cased one. */
+.route-rule-row--end-route .route-rule-name {
+  font-style: italic;
+  color: token('color.foreground.subtle');
+}
+
+/* No longer `flex: 1` — the name sizes to its own content (shrinking with ellipsis if the row
+   runs out of room) so the Final tag can sit immediately after it instead of at the far edge of
+   an artificially stretched name box. */
+.route-rule-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+/* The rule's actual filter expression on its own line below the name — shown so a glance at the
+   panel says what could be passing through this row, without opening the drawer. Always shown,
+   including the literal "true" (an explicit "matches everything," not nothing worth displaying). */
+.route-rule-filter {
+  font-family: token('core.fontFamily.mono');
+  color: token('color.foreground.subtle');
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A sharp-cornered rectangle, not a pill — deliberately prominent since Final changes routing
+   behavior (no further rules are evaluated once it matches). Was a solid pill filled with
+   `color.background.accent.solid.default` behind white text, which measured 3.26:1 live, failing
+   WCAG AA's 4.5:1 at this font size. `accent.subtle` + `accent.default` text is the same pairing
+   already proven accessible elsewhere in this app (~4.7:1 light / ~10:1 dark) with a real fill and
+   border to still read as a tag, not bare text. Accent, not brand: brand teal already means
+   "primary/active" in the chrome, and Final is a different kind of signal.
+   Now the one pushed to the row's far end (`margin-left: auto`) — it took over that position from
+   the per-rule status word, which was removed as redundant with the row's own left-border color
+   (matching every other panel's already-established status treatment). */
+.route-rule-final {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px token('spacing.sm');
+  border: 1px solid token('color.background.accent.solid.default');
+  border-radius: 0;
+  background: token('color.background.accent.subtle');
+  font: token('typography.body.xs.normal');
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: token('color.foreground.accent.default');
+}
+
+.route-rules-toggle {
+  /* Same stretch-link-interception fix as `.route-rules-list` above — this is a separate flex-item
+     sibling, not a descendant of that list, so it needs its own promotion. */
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: token('spacing.xs') 0 0;
+}

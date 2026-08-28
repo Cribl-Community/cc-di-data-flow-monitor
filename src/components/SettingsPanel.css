@@ -1,0 +1,165 @@
+/* No longer fighting `.view-body`'s own centering defaults (see the former `SettingsPage.css`'s
+   own doc comment for that whole saga) — this content now lives inside a `<Drawer>`, a fresh
+   layout context with no shared base rule to lose a specificity tie against, so a plain selector
+   is enough here. */
+.settings-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.2xl');
+}
+
+.settings-panel-body section {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.md');
+}
+
+/* Pinned to the top of the Drawer's own scrolling body (`.capra-Drawer-module-*-body`), the same
+   `position: sticky` treatment already proven for Help's own tab strip (`.help-sticky-header`) —
+   real, reported bug: with the Thresholds tab's own six sliders plus General's own content, this
+   panel is no longer short enough to avoid scrolling, and the tab strip was scrolling away with
+   everything else instead of staying reachable. See `.help-sticky-header`'s own doc comment
+   (`HelpPanel.css`) for exactly why the `top: -16px`/`margin-top: -16px`/`padding-top: 16px` trio
+   is needed together — the same real, live-confirmed Capra `Drawer` body padding quirk applies
+   here unchanged, so the same three values are reused rather than re-derived. */
+.settings-sticky-header {
+  position: sticky;
+  top: -16px;
+  z-index: 2;
+  margin-top: -16px;
+  padding-top: 16px;
+  background: token('color.background.panel.solid');
+}
+
+/* General/Thresholds tab strip — same shape as Help's own `.help-tablist`/`.help-tab`. */
+.settings-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: token('spacing.xs') token('spacing.lg');
+  border-bottom: token('border.default');
+}
+
+.settings-tab {
+  border: none;
+  background: none;
+  padding: token('spacing.sm') 0;
+  font: token('typography.body.sm.semibold');
+  color: token('color.foreground.subtle');
+  cursor: pointer;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  transition:
+    color token('motion.duration.short') token('motion.easing.standard'),
+    border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+.settings-tab:hover {
+  color: token('color.foreground.default');
+}
+
+.settings-tab:focus-visible {
+  outline: token('border.focus');
+  outline-offset: 2px;
+}
+
+.settings-tab--active {
+  color: token('color.foreground.accent.default');
+  border-bottom-color: token('color.background.accent.solid.default');
+}
+
+.settings-tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.2xl');
+}
+
+.settings-tabpanel:focus-visible {
+  outline: none;
+}
+
+.settings-page-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: token('spacing.lg');
+  padding: token('spacing.md') 0;
+  border-bottom: token('border.default');
+}
+
+.settings-page-row:last-child {
+  border-bottom: none;
+}
+
+/* Capra's `Text` sets `all: unset` internally, which resets a `<p>`'s default `display: block`
+   back to `inline` — without this, the name and description ran together on one line ("Theme
+   Follows your system by default."). Stacking them explicitly here restores the intended
+   two-line layout regardless of what Capra's own reset does to the `<p>`s inside. */
+.settings-page-label {
+  display: flex;
+  flex-direction: column;
+  gap: token('spacing.xs');
+  /* Grow to absorb the row's available width and let its own text wrap, so the control on the
+     right (`:last-child` below) never has to shrink to make room for it. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The control side of every row — the Switch, either select, or a `.segmented` group — keeps its
+   natural width no matter how long the row's label/description text gets. Without this, the
+   Auto-refresh row's `.segmented` group (5 buttons, ~250px of content) was being flex-shrunk
+   below its own content width, and with `.segmented`'s `overflow: hidden`, the last button ("5m")
+   rendered visibly cut off instead of just tightening up. */
+.settings-page-row > :last-child {
+  flex-shrink: 0;
+}
+
+.settings-page-select {
+  height: token('dimension.component.md');
+  padding: 0 token('spacing.md');
+  border: token('border.default');
+  border-radius: token('radius.lg');
+  background: token('color.background.neutral.subtle');
+  color: token('color.foreground.default');
+  font: token('typography.body.sm.semibold');
+  transition: border-color token('motion.duration.short') token('motion.easing.standard');
+}
+
+/* Same border-highlight treatment as `.pill-select` in the top control bar, for a consistent
+   "what am I hovering" affordance across every dropdown in the app. */
+.settings-page-select:hover {
+  border-color: token('color.border.accent.strong');
+}
+
+/* Explicit min-width so each icon button matches the ~50px an Auto-refresh text button naturally
+   ends up at (padding + "30s"/"1m"/etc.) — icon buttons have no text to size themselves against,
+   so without this they were only as wide as their padding + a 16px icon (32px), visibly smaller
+   than every other button in this "same kind of control" family. */
+.segmented--icon button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: token('dimension.component.xl');
+  padding: token('spacing.sm') token('spacing.md');
+  font-size: 16px;
+}
+
+/* CPU/Memory pressure-warning rows — a plain native range input, this app's first (no styled
+   Capra slider component exists to reach for instead), plus a fixed-width monospace readout so
+   the row's own width doesn't shift as the two-vs-three-digit value changes while dragging. */
+.settings-threshold-control {
+  display: flex;
+  align-items: center;
+  gap: token('spacing.md');
+}
+
+.settings-threshold-control input[type='range'] {
+  width: 160px;
+  accent-color: token('color.background.accent.solid.default');
+}
+
+.settings-threshold-value {
+  min-width: 3ch;
+  text-align: right;
+  font-family: token('core.fontFamily.mono');
+  font-variant-numeric: tabular-nums;
+}
